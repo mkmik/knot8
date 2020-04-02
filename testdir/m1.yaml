@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kno8.vmware.com/foo: .spec.template.spec.containers[?(@.name=="app")].env[?(@.name=="foo")].value
+spec:
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - name: app
+        image: debian:10
+        args:
+        - bash
+        - "-c"
+        - |
+          echo $FOO
+          while true; do sleep 100000; done
+        env:
+          - name: FOO
+            value: bar # 8< kno8.vmware.com/foo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+  annotations:
+    kno8.vmware.com/foo: .foo
+data:
+  foo: bar # 8< kno8.vmware.com/foo

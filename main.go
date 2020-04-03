@@ -54,15 +54,15 @@ func (s *SetCmd) Run(ctx *Context) error {
 	}
 
 	for _, m := range manifests {
-		log.Printf("--> manifest in %q, contents: %q...\n", m.file, fmt.Sprint(m.raw)[:40])
+		log.Printf("--> manifest in %q, contents: %#v\n", m.file, m)
 	}
 	return nil
 }
 
 type Manifest struct {
-	APIVersion string         `json:"apiVersion"`
-	Kind       string         `json:"kind"`
-	Metadata   ObjectMetadata `json:"metadata"`
+	APIVersion string         `yaml:"apiVersion"`
+	Kind       string         `yaml:"kind"`
+	Metadata   ObjectMetadata `yaml:"metadata"`
 
 	file string
 	raw  interface{}
@@ -83,7 +83,19 @@ func parseManifests(f *os.File) ([]Manifest, error) {
 			return nil, err
 		}
 
-		res = append(res, Manifest{file: f.Name(), raw: i})
+		// quick&dirty way to map an in-memory json tree back to a typed Go struct.
+		tmp, err := yaml.Marshal(i)
+		if err != nil {
+			return nil, err
+		}
+		var m Manifest
+		if err := yaml.Unmarshal(tmp, &m); err != nil {
+			return nil, err
+		}
+		m.raw = i
+		m.file = f.Name()
+
+		res = append(res, m)
 
 	}
 	return res, nil

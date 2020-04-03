@@ -1,13 +1,46 @@
 package main
 
-import "fmt"
+import (
+	"strings"
+
+	"github.com/mkmik/multierror"
+)
+
+const (
+	annoPrefix = "kno8.vmware.com/"
+)
 
 type Knob struct {
 	Name     string
-	Pointer  string
+	Pointers []Pointer
+}
+
+type Pointer struct {
+	Expr     string
 	Manifest *Manifest
 }
 
 func parseKnobs(manifests []*Manifest) (map[string]Knob, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	res := map[string]Knob{}
+	var errs []error
+	for _, m := range manifests {
+		for k, v := range m.Metadata.Annotations {
+			if strings.HasPrefix(k, annoPrefix) {
+				if err := addKnob(res, m, strings.TrimPrefix(k, annoPrefix), v); err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+	if errs != nil {
+		return nil, multierror.Join(errs)
+	}
+	return res, nil
+}
+
+func addKnob(r map[string]Knob, m *Manifest, n, e string) error {
+	k := r[n]
+	k.Pointers = append(k.Pointers, Pointer{Expr: e, Manifest: m})
+	r[n] = k
+	return nil
 }

@@ -53,6 +53,14 @@ func (s *SetCmd) Run(ctx *Context) error {
 	for _, m := range manifests {
 		log.Printf("--> manifest in %q, contents: %#v\n", m.file, m)
 	}
+
+	knobs, err := parseKnobs(manifests)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("------------")
+	log.Printf("knobs: %v\n", knobs)
 	return nil
 }
 

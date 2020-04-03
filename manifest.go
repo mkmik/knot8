@@ -20,9 +20,10 @@ type ObjectMetadata struct {
 	Annotations map[string]string `json:"annotations"`
 }
 
-func parseManifests(f *os.File) ([]Manifest, error) {
-	var res []Manifest
+func parseManifests(f *os.File) ([]*Manifest, error) {
 	d := yaml.NewDecoder(f)
+
+	var res []*Manifest
 	for {
 		var i interface{}
 		if err := d.Decode(&i); err == io.EOF {
@@ -43,7 +44,7 @@ func parseManifests(f *os.File) ([]Manifest, error) {
 		m.raw = i
 		m.file = f.Name()
 
-		res = append(res, m)
+		res = append(res, &m)
 
 	}
 	return res, nil

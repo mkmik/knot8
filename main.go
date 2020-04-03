@@ -36,7 +36,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 	}()
 
 	var (
-		manifests []Manifest
+		manifests []*Manifest
 		errs      []error
 	)
 	for _, f := range files {

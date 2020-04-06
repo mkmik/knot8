@@ -22,10 +22,8 @@ spec:
 	if err := yaml.Unmarshal([]byte(src), &root); err != nil {
 		t.Fatal(err)
 	}
-	if false {
-		if _, err := kptr.Find(&root, "/bad/path"); !errors.Is(err, kptr.ErrNotFound) {
-			t.Fatalf("expecting not found error, got: %v", err)
-		}
+	if _, err := kptr.Find(&root, "/bad/path"); !errors.Is(err, kptr.ErrNotFound) {
+		t.Fatalf("expecting not found error, got: %v", err)
 	}
 
 	r, err := kptr.Find(&root, `/spec/template/spec/replicas`)

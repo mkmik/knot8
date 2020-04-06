@@ -95,14 +95,7 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 			if err := yaml.Unmarshal([]byte(tok[1:]), &mtree); err != nil {
 				return nil, err
 			}
-			// TODO: implement json subtree match this is just a hack
-			var key, value string
-			for k, v := range mtree.(map[string]interface{}) {
-				key = k
-				value = v.(string)
-				break
-			}
-			return filter(c, keyValuePred(key, value))
+			return filter(c, subtreeMatchPredicate(mtree))
 		case strings.HasPrefix(tok, "~["): // alternative syntax: ~[name=app]
 			s := strings.SplitN(strings.TrimSuffix(strings.TrimPrefix(tok, "~["), "]"), "=", 2)
 			if len(s) != 2 {
@@ -155,5 +148,18 @@ func keyValuePred(key, value string) nodePredicate {
 			return false, err
 		}
 		return m[0].Value == value, nil
+	}
+}
+
+func subtreeMatchPredicate(subtree interface{}) nodePredicate {
+	return func(n *yaml.Node) (bool, error) {
+		// TODO: implement json subtree match this is just a hack
+		var key, value string
+		for k, v := range subtree.(map[string]interface{}) {
+			key = k
+			value = v.(string)
+			break
+		}
+		return keyValuePred(key, value)(n)
 	}
 }

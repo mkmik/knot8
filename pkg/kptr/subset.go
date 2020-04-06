@@ -5,6 +5,10 @@ import (
 )
 
 // isTreeSubset returns true if all elements of the json tree a exist in the json tree b.
+// i.e. when the a tree is a subset of the b tree.
+//
+// e.g. [0,2] is a subset of [0,1,2]
+//      {"a":{"b":1}} is a subset of {"x":2, "a":{"c":4, "b":1, "d":5}, "y":1}
 func isTreeSubset(a, b *yaml.Node) bool {
 	if a.Kind == yaml.DocumentNode {
 		a = a.Content[0]

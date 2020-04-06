@@ -35,6 +35,9 @@ func TestIsTreeSubset(t *testing.T) {
 		{`[0]`, `[1, 2]`, false},
 		{`{"a":{"b": [1]}}`, `{"a":{"b": [0,1,2], "c": 2}}`, true},
 		{`{"a":{"b": [1]}}`, `{"a":{"b": [0,2], "c": 2}}`, false},
+
+		{`[0,2]`, `[0,1,2]`, true},
+		{`{"a":{"b":1}}`, `{"x":2, "a":{"c":4, "b":1, "d":5}, "y":1}`, true}, // from isTreeSubset doc comment.
 	}
 
 	for i, tc := range testCases {

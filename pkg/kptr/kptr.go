@@ -4,7 +4,6 @@ package kptr
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -69,11 +68,6 @@ func find(root *yaml.Node, toks []string) ([]*yaml.Node, error) {
 }
 
 func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
-	if false {
-		rendered, _ := yaml.Marshal(root)
-		log.Printf("searching %q in %q:\n%s\n---", tok, root.Tag, string(rendered))
-	}
-
 	c := root.Content
 	switch root.Kind {
 	case yaml.MappingNode:

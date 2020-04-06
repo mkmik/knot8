@@ -3,7 +3,7 @@
 
 /*
 Package kptr implements a simple extension to the JSONPointers standard that handles pointers into k8s manifests
-which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry (e.g. "name"
+which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry (e.g. "name".
 */
 package kptr
 
@@ -17,8 +17,10 @@ import (
 )
 
 var (
+	// ErrTooManyResults means a pointer matches too many results (usually more than one expected result).
 	ErrTooManyResults = fmt.Errorf("too many results")
-	ErrNotFound       = fmt.Errorf("not found")
+	// ErrNotFound a pointer failed to find a match.
+	ErrNotFound = fmt.Errorf("not found")
 )
 
 // FindAll finds all locations in the json/yaml tree pointed by root that match the extended
@@ -37,7 +39,7 @@ func FindAll(root *yaml.Node, ptr string) ([]*yaml.Node, error) {
 	return res, nil
 }
 
-// Like FindAll but returns ErrTooManyResults if multiple matches are located.
+// Find is like FindAll but returns ErrTooManyResults if multiple matches are located.
 func Find(root *yaml.Node, ptr string) (*yaml.Node, error) {
 	res, err := FindAll(root, ptr)
 	if err != nil {

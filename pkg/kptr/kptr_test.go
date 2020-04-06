@@ -12,6 +12,35 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+func ExampleFind() {
+	src := `kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: foo
+spec:
+  template:
+    spec:
+      replicas: 1
+      containers:
+      - name: app
+        image: nginx
+      - name: sidecar
+        image: mysidecar
+`
+	var n yaml.Node
+	yaml.Unmarshal([]byte(src), &n)
+
+	r, _ := kptr.Find(&n, `/spec/template/spec/containers/1/image`)
+
+	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+
+	r, _ = kptr.Find(&n, `/spec/template/spec/containers/~{"name":"app"}/image`)
+
+	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+	// Output: Scalar "mysidecar" at 13:16
+	// Scalar "nginx" at 11:16
+}
+
 func TestParse(t *testing.T) {
 	src := `
 spec:

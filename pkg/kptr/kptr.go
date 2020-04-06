@@ -3,7 +3,6 @@
 package kptr
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -122,37 +121,30 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 	return nil, fmt.Errorf("%q: %w", tok, ErrNotFound)
 }
 
-type nodePredicate func(*yaml.Node) (bool, error)
+type nodePredicate func(*yaml.Node) bool
 
 func filter(nodes []*yaml.Node, pred nodePredicate) ([]*yaml.Node, error) {
 	var res []*yaml.Node
 	for _, n := range nodes {
-		ok, err := pred(n)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
+		if pred(n) {
 			res = append(res, n)
 		}
 	}
 	return res, nil
 }
 
-func keyValuePred(key, value string) nodePredicate {
-	return func(n *yaml.Node) (bool, error) {
-		m, err := match(n, key)
-		if errors.Is(err, ErrNotFound) {
-			return false, nil
-		}
-		if err != nil {
-			return false, err
-		}
-		return m[0].Value == value, nil
+func treeSubsetPred(a *yaml.Node) nodePredicate {
+	return func(b *yaml.Node) bool {
+		return isTreeSubset(a, b)
 	}
 }
 
-func treeSubsetPred(a *yaml.Node) nodePredicate {
-	return func(b *yaml.Node) (bool, error) {
-		return isTreeSubset(a, b), nil
+func keyValuePred(key, value string) nodePredicate {
+	a := &yaml.Node{
+		Kind: yaml.MappingNode, Content: []*yaml.Node{
+			{Kind: yaml.ScalarNode, Value: key},
+			{Kind: yaml.ScalarNode, Value: value},
+		},
 	}
+	return treeSubsetPred(a)
 }

@@ -102,7 +102,7 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 				return nil, fmt.Errorf("syntax error, expecting ~[key=value]")
 			}
 			key, value := s[0], s[1]
-			return filter(c, keyValuePred(key, value))
+			return filter(c, subtreeMatchPredicate(map[string]interface{}{key: value}))
 		default:
 			i, err := strconv.Atoi(tok)
 			if err != nil {

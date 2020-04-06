@@ -104,7 +104,7 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 			}
 			return simpleMatchArray(c, key, value)
 		case strings.HasPrefix(tok, "~["): // alternative syntax: ~[name=app]
-			s := strings.SplitN(strings.TrimSuffix(strings.TrimPrefix(tok, "~]"), "]"), "=", 2)
+			s := strings.SplitN(strings.TrimSuffix(strings.TrimPrefix(tok, "~["), "]"), "=", 2)
 			if len(s) != 2 {
 				return nil, fmt.Errorf("syntax error, expecting ~[key=value]")
 			}

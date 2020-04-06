@@ -91,18 +91,18 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 	case yaml.SequenceNode:
 		switch {
 		case strings.HasPrefix(tok, "~{"): // subtree match: ~{"name":"app"}
-			var mtree interface{}
+			var mtree yaml.Node
 			if err := yaml.Unmarshal([]byte(tok[1:]), &mtree); err != nil {
 				return nil, err
 			}
-			return filter(c, subtreeMatchPredicate(mtree))
+			return filter(c, treeSubsetPred(&mtree))
 		case strings.HasPrefix(tok, "~["): // alternative syntax: ~[name=app]
 			s := strings.SplitN(strings.TrimSuffix(strings.TrimPrefix(tok, "~["), "]"), "=", 2)
 			if len(s) != 2 {
 				return nil, fmt.Errorf("syntax error, expecting ~[key=value]")
 			}
 			key, value := s[0], s[1]
-			return filter(c, subtreeMatchPredicate(map[string]interface{}{key: value}))
+			return filter(c, keyValuePred(key, value))
 		default:
 			i, err := strconv.Atoi(tok)
 			if err != nil {
@@ -151,15 +151,8 @@ func keyValuePred(key, value string) nodePredicate {
 	}
 }
 
-func subtreeMatchPredicate(subtree interface{}) nodePredicate {
-	return func(n *yaml.Node) (bool, error) {
-		// TODO: implement json subtree match this is just a hack
-		var key, value string
-		for k, v := range subtree.(map[string]interface{}) {
-			key = k
-			value = v.(string)
-			break
-		}
-		return keyValuePred(key, value)(n)
+func treeSubsetPred(a *yaml.Node) nodePredicate {
+	return func(b *yaml.Node) (bool, error) {
+		return isTreeSubset(a, b), nil
 	}
 }

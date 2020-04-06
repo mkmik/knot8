@@ -1,5 +1,10 @@
-// Package kptr implements a simple extension to the JSONPointers standard that handles pointers into k8s manifests
-// which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry (e.g. "name"
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+/*
+Package kptr implements a simple extension to the JSONPointers standard that handles pointers into k8s manifests
+which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry (e.g. "name"
+*/
 package kptr
 
 import (

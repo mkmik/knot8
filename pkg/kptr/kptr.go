@@ -102,14 +102,14 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 				value = v.(string)
 				break
 			}
-			return simpleMatchArray(c, key, value)
+			return filter(c, keyValuePred(key, value))
 		case strings.HasPrefix(tok, "~["): // alternative syntax: ~[name=app]
 			s := strings.SplitN(strings.TrimSuffix(strings.TrimPrefix(tok, "~["), "]"), "=", 2)
 			if len(s) != 2 {
 				return nil, fmt.Errorf("syntax error, expecting ~[key=value]")
 			}
 			key, value := s[0], s[1]
-			return simpleMatchArray(c, key, value)
+			return filter(c, keyValuePred(key, value))
 		default:
 			i, err := strconv.Atoi(tok)
 			if err != nil {
@@ -129,18 +129,31 @@ func match(root *yaml.Node, tok string) ([]*yaml.Node, error) {
 	return nil, fmt.Errorf("%q: %w", tok, ErrNotFound)
 }
 
-func simpleMatchArray(c []*yaml.Node, key, value string) ([]*yaml.Node, error) {
-	var ma []*yaml.Node
-	for _, a := range c {
-		e, err := match(a, key)
-		if errors.Is(err, ErrNotFound) {
-			continue
-		} else if err != nil {
+type nodePredicate func(*yaml.Node) (bool, error)
+
+func filter(nodes []*yaml.Node, pred nodePredicate) ([]*yaml.Node, error) {
+	var res []*yaml.Node
+	for _, n := range nodes {
+		ok, err := pred(n)
+		if err != nil {
 			return nil, err
 		}
-		if e[0].Value == value {
-			ma = append(ma, a)
+		if ok {
+			res = append(res, n)
 		}
 	}
-	return ma, nil
+	return res, nil
+}
+
+func keyValuePred(key, value string) nodePredicate {
+	return func(n *yaml.Node) (bool, error) {
+		m, err := match(n, key)
+		if errors.Is(err, ErrNotFound) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return m[0].Value == value, nil
+	}
 }

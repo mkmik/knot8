@@ -11,6 +11,19 @@ It also implements a simple extension to the JSONPointers standard that handles 
 which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry
 (e.g. "name").
 
+For example, given a JSON/YAML input document:
+
+    {"a": [{"k":"x", "v": 42}, {"k":"y", "v": 77}]}
+
+If "k" is a field that contains a key that uniquiely identifies an element in a given array,
+we can select the node with the scalar 42 by first selecting the array element for which "k"
+has the value of "x", and then by walking to the field "v":
+
+    /a/~{"k":"x"}/v
+
+The "~" token accepts an argument which is interpreted as JSON value to be used as "query-by-example" filter
+against elements of an array.
+The array element is selected if the query-by-example object is a (recursive) subset of the element.
 
 */
 package kptr

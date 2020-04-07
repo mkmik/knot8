@@ -41,6 +41,22 @@ spec:
 	// Scalar "nginx" at 11:16
 }
 
+func ExampleFind_jsonPointerCompat() {
+	// the array item match syntax doesn't accidentally match a field that just happens
+	// to contain the same characters.
+	src := `a:
+  "{\"b\":\"c\"}": d
+`
+	var n yaml.Node
+	yaml.Unmarshal([]byte(src), &n)
+
+	r, _ := kptr.Find(&n, `/a/{"b":"c"}`)
+
+	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+
+	// Output: Scalar "d" at 2:20
+}
+
 func TestParse(t *testing.T) {
 	src := `
 spec:

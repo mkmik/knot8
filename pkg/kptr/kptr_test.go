@@ -13,6 +13,27 @@ import (
 )
 
 func ExampleFind() {
+	src := `
+a:
+  b:
+    c: 42
+d:
+- e
+- f
+`
+	var n yaml.Node
+	yaml.Unmarshal([]byte(src), &n)
+
+	r, _ := kptr.Find(&n, `/a/b/c`)
+	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+
+	r, _ = kptr.Find(&n, `/d/0`)
+	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+	// Output: Scalar "42" at 4:8
+	// Scalar "e" at 6:3
+}
+
+func ExampleFind_extension() {
 	src := `kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -31,12 +52,11 @@ spec:
 	yaml.Unmarshal([]byte(src), &n)
 
 	r, _ := kptr.Find(&n, `/spec/template/spec/containers/1/image`)
-
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 
 	r, _ = kptr.Find(&n, `/spec/template/spec/containers/~{"name":"app"}/image`)
-
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
+
 	// Output: Scalar "mysidecar" at 13:16
 	// Scalar "nginx" at 11:16
 }

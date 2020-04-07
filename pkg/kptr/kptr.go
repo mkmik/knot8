@@ -2,8 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-Package kptr implements a simple extension to the JSONPointers standard that handles pointers into k8s manifests
-which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry (e.g. "name".
+Package kptr is a JSONPointer implementation that can walk though a yaml.Node tree.
+
+yaml.Nodes preserve comments and locations in the source and can be useful to implement editing in-place
+functionality that uses JSONPointer to locate the fields to be edited.
+
+It also implements a simple extension to the JSONPointers standard that handles pointers into k8s manifests
+which usually contain arrays whose elements are objects with a field that uniquely specifies the array entry
+(e.g. "name").
+
+
 */
 package kptr
 

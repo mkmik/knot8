@@ -124,4 +124,23 @@ spec:
 			}
 		})
 	}
+
+	errorCases := []struct {
+		ptr string
+		err error
+	}{
+		{"a", fmt.Errorf(`JSON pointer must be empty or start with a "/`)},
+		{"/a", kptr.ErrNotFound},
+	}
+	for i, tc := range errorCases {
+		t.Run(fmt.Sprint("error", i), func(t *testing.T) {
+			_, err := kptr.Find(&root, tc.ptr)
+			if err == nil {
+				t.Fatal("error expected")
+			}
+			if got, want := err, tc.err; got.Error() != want.Error() && !errors.Is(got, want) {
+				t.Errorf("got: %v, want: %v", got, want)
+			}
+		})
+	}
 }

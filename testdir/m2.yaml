@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo2
+  annotations:
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}
+spec:
+  selector:
+    matchLabels:
+      app: demo2
+  template:
+    metadata:
+      labels:
+        app: demo2
+    spec:
+      containers:
+      - name: app
+        image: debian:10
+        args:
+        - bash
+        - "-c"
+        - |
+          echo Foo: $FOO
+          echo Bar:
+          cat /cfg/config
+          echo Baz: $BAZ
+
+          while true; do sleep 100000; done
+        env:
+          - name: FOO
+            value: foo # 8< knot8.io/foo
+          - name: BAZ
+            valueFrom:
+              secretKeyRef:
+                name: demo2
+                key: baz
+        volumeMounts:
+        - name: config
+          mountPath: /cfg
+      volumes:
+      - name: config
+        configMap:
+          name: demo2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo2
+  annotations:
+    field.knot8.io/cfg: yaml(/data/config)
+    field.knot8.io/qux: base64($cfg/some/nested/format/qux)
+data:
+  config: | # 8< field.knot8.io/config
+    some:
+      other:
+        yaml: bar
+      nested:
+        format:
+          qux: ZW5jb2RlZCBhcyBiYXNlNjQ=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo2
+  annotations:
+    field.knot8.io/baz: base64(/data/baz)
+data:
+  baz: c2VjcmV0QmF6

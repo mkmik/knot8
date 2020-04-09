@@ -53,6 +53,8 @@ data:
     some:
       other:
         yaml: bar
+      nested:
+        format: ZW5jb2RlZCBhcyBiYXNlNjQ=
 ---
 apiVersion: v1
 kind: Secret

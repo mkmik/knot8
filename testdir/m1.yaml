@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: demo
   annotations:
-    field.knot8.io/foo: kptr:/spec/template/spec/containers/~{"name":"app"}]/env/~{"name":"FOO"}
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}]/env/~{"name":"FOO"}
 spec:
   selector:
     matchLabels:
@@ -20,17 +20,23 @@ spec:
         - bash
         - "-c"
         - |
-          echo $FOO
+          echo Foo: $FOO
+          echo Bar:
+
           while true; do sleep 100000; done
         env:
           - name: FOO
-            value: bar # 8< knot8.io/foo
+            value: foo # 8< knot8.io/foo
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: demo
   annotations:
-    field.knot8.io/foo: kptr:/foo
+    field.knot8.io/cfg: /config
+    field
 data:
-  foo: bar # 8< field.knot8.io/foo
+  config: | # 8< field.knot8.io/config
+    some:
+      other:
+        yaml: bar

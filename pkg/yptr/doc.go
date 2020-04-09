@@ -1,5 +1,5 @@
 // Copyright 2020 VMware, Inc.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: BSD-2-Clause
 
 /*
 Package yptr is a JSONPointer implementation that can walk though a yaml.Node tree.

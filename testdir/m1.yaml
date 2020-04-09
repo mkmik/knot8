@@ -22,11 +22,25 @@ spec:
         - |
           echo Foo: $FOO
           echo Bar:
+          cat /cfg/config
+          echo Baz: $BAZ
 
           while true; do sleep 100000; done
         env:
           - name: FOO
             value: foo # 8< knot8.io/foo
+          - name: BAZ
+            valueFrom:
+              secretKeyRef:
+                name: demo
+                key: baz
+        volumeMounts:
+        - name: config
+          mountPath: /cfg
+      volumes:
+      - name: config
+        configMap:
+          name: demo
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -34,9 +48,15 @@ metadata:
   name: demo
   annotations:
     field.knot8.io/cfg: /config
-    field
 data:
   config: | # 8< field.knot8.io/config
     some:
       other:
         yaml: bar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo
+data:
+  baz: c2VjcmV0QmF6

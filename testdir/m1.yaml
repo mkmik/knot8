@@ -3,8 +3,7 @@ kind: Deployment
 metadata:
   name: demo
   annotations:
-    # knot8.vmware.com/foo: jsonpath:.spec.template.spec.containers[?(@.name=="app")].env[?(@.name=="foo")].value
-    knot8.vmware.com/foo: kptr:/spec/template/spec/containers/~[name=app]/env/~[name=foo]
+    field.knot8.io/foo: kptr:/spec/template/spec/containers/~{"name":"app"}]/env/~{"name":"FOO"}
 spec:
   selector:
     matchLabels:
@@ -25,13 +24,13 @@ spec:
           while true; do sleep 100000; done
         env:
           - name: FOO
-            value: bar # 8< knot8.vmware.com/foo
+            value: bar # 8< knot8.io/foo
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: demo
   annotations:
-    knot8.vmware.com/foo: kptr:/foo
+    field.knot8.io/foo: kptr:/foo
 data:
-  foo: bar # 8< knot8.vmware.com/foo
+  foo: bar # 8< field.knot8.io/foo

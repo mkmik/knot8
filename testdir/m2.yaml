@@ -47,11 +47,11 @@ kind: ConfigMap
 metadata:
   name: demo2
   annotations:
-    let.knot8.io/cfg: yaml(/data/config)
-
     field.knot8.io/foo: link(baz, quz)
     field.knot8.io/baz: cfg/some/other/yaml
     field.knot8.io/qux: base64(cfg/some/nested/format/qux)
+
+    let.knot8.io/cfg: yaml(/data/config)
 data:
   config: |
     some:

@@ -25,6 +25,13 @@ The "~" token accepts an argument which is interpreted as JSON value to be used 
 against elements of an array.
 The array element is selected if the query-by-example object is a (recursive) subset of the element.
 
+The ~{...} extension can potentially locate multiple matches. For example, "~{}" effectively acts as a wildcard.
+This library offers an API to retrieve multiple matches ("FindAll") or to fetch only one match and error if multiple matches are found ("Find").
+
+JSONPointer is designed to locate exactly one node in the tree. This can be achieved only if the effective
+schema of the JSON/YAML document mandates that there is an identifying key in each array element you want to point to.
+Using the "Find" function effectively performs a dynamic check of that invariant.
+
 */
 package kptr
 

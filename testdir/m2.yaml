@@ -47,7 +47,7 @@ kind: ConfigMap
 metadata:
   name: demo2
   annotations:
-    field.knot8.io/cfg: yaml(/data/config)
+    let.knot8.io/cfg: yaml(/data/config)
 
     field.knot8.io/foo: link(baz, quz)
     field.knot8.io/baz: cfg/some/other/yaml

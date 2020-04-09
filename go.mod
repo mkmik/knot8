@@ -1,4 +1,4 @@
-module github.com/mkmik/knot8
+module knot8.io
 
 go 1.14
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	yptr "github.com/mkmik/knot8/pkg/yptr"
+	yptr "knot8.io/pkg/yptr"
 	yaml "gopkg.in/yaml.v3"
 )
 

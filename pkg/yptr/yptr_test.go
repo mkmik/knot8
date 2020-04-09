@@ -1,14 +1,14 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package kptr_test
+package yptr_test
 
 import (
 	"errors"
 	"fmt"
 	"testing"
 
-	kptr "github.com/mkmik/knot8/pkg/kptr"
+	yptr "github.com/mkmik/knot8/pkg/yptr"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -24,10 +24,10 @@ d:
 	var n yaml.Node
 	yaml.Unmarshal([]byte(src), &n)
 
-	r, _ := kptr.Find(&n, `/a/b/c`)
+	r, _ := yptr.Find(&n, `/a/b/c`)
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 
-	r, _ = kptr.Find(&n, `/d/0`)
+	r, _ = yptr.Find(&n, `/d/0`)
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 	// Output: Scalar "42" at 4:8
 	// Scalar "e" at 6:3
@@ -51,10 +51,10 @@ spec:
 	var n yaml.Node
 	yaml.Unmarshal([]byte(src), &n)
 
-	r, _ := kptr.Find(&n, `/spec/template/spec/containers/1/image`)
+	r, _ := yptr.Find(&n, `/spec/template/spec/containers/1/image`)
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 
-	r, _ = kptr.Find(&n, `/spec/template/spec/containers/~{"name":"app"}/image`)
+	r, _ = yptr.Find(&n, `/spec/template/spec/containers/~{"name":"app"}/image`)
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 
 	// Output: Scalar "mysidecar" at 13:16
@@ -70,7 +70,7 @@ func ExampleFind_jsonPointerCompat() {
 	var n yaml.Node
 	yaml.Unmarshal([]byte(src), &n)
 
-	r, _ := kptr.Find(&n, `/a/{"b":"c"}`)
+	r, _ := yptr.Find(&n, `/a/{"b":"c"}`)
 
 	fmt.Printf("Scalar %q at %d:%d\n", r.Value, r.Line, r.Column)
 
@@ -91,7 +91,7 @@ spec:
 	if err := yaml.Unmarshal([]byte(src), &root); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := kptr.Find(&root, "/bad/path"); !errors.Is(err, kptr.ErrNotFound) {
+	if _, err := yptr.Find(&root, "/bad/path"); !errors.Is(err, yptr.ErrNotFound) {
 		t.Fatalf("expecting not found error, got: %v", err)
 	}
 
@@ -109,7 +109,7 @@ spec:
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			r, err := kptr.Find(&root, tc.ptr)
+			r, err := yptr.Find(&root, tc.ptr)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -130,11 +130,11 @@ spec:
 		err error
 	}{
 		{"a", fmt.Errorf(`JSON pointer must be empty or start with a "/`)},
-		{"/a", kptr.ErrNotFound},
+		{"/a", yptr.ErrNotFound},
 	}
 	for i, tc := range errorCases {
 		t.Run(fmt.Sprint("error", i), func(t *testing.T) {
-			_, err := kptr.Find(&root, tc.ptr)
+			_, err := yptr.Find(&root, tc.ptr)
 			if err == nil {
 				t.Fatal("error expected")
 			}

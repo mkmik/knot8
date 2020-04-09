@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-Package kptr is a JSONPointer implementation that can walk though a yaml.Node tree.
+Package yptr is a JSONPointer implementation that can walk though a yaml.Node tree.
 
 yaml.Nodes preserve comments and locations in the source and can be useful to implement editing in-place
 functionality that uses JSONPointer to locate the fields to be edited.
@@ -33,7 +33,7 @@ schema of the JSON/YAML document mandates that there is an identifying key in ea
 Using the "Find" function effectively performs a dynamic check of that invariant.
 
 */
-package kptr
+package yptr
 
 import (
 	"fmt"

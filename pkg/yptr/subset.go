@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package kptr
+package yptr
 
 import (
 	yaml "gopkg.in/yaml.v3"

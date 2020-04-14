@@ -4,7 +4,7 @@ define and manipulate "knobs" in K8s manifests
 ## Example
 
 ```sh
-$ go build ./cmd/knot8 && ./knot8 set testdir/m1.yaml -v foo:hola
+$ knot8 set testdir/m1.yaml -v foo:hola
 $ git diff
 ```
 ```diff

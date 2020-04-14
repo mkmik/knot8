@@ -3,9 +3,11 @@ define and manipulate "knobs" in K8s manifests
 
 ## Example
 
-```
+```sh
 $ go build ./cmd/knot8 && ./knot8 set testdir/m1.yaml -v foo:hola
 $ git diff
+```
+```diff
 diff --git testdir/m1.yaml testdir/m1.yaml
 index ea3a8fd..04a2143 100644
 --- testdir/m1.yaml

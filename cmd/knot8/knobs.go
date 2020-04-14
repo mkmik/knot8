@@ -76,7 +76,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 		return multierror.Join(errs)
 	}
 	for f, positions := range updates {
-		if err := updateFile(f, v, positions); err != nil {
+		if err := patchFile(f, v, positions); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -88,9 +88,9 @@ type runeRange struct {
 	end   int
 }
 
-// updateFile edits a file in place by replacing each of the given rune ranges in the file
+// patchFile edits a file in place by replacing each of the given rune ranges in the file
 // with a given string value.
-func updateFile(filename, value string, positions []runeRange) error {
+func patchFile(filename, value string, positions []runeRange) error {
 	backwards := make([]runeRange, len(positions))
 	copy(backwards, positions)
 	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })

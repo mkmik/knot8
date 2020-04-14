@@ -60,7 +60,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 		return fmt.Errorf("knob %q not found", n)
 	}
 
-	updates := map[string]runeRangeSlice{}
+	updates := map[string][]runeRange{}
 
 	var errs []error
 	for _, p := range k.Pointers {
@@ -88,18 +88,12 @@ type runeRange struct {
 	end   int
 }
 
-type runeRangeSlice []runeRange
-
-func (r runeRangeSlice) Len() int           { return len(r) }
-func (r runeRangeSlice) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
-func (r runeRangeSlice) Less(i, j int) bool { return r[i].start < r[j].start }
-
 // updateFile edits a file in place by replacing each of the given rune ranges in the file
 // with a given string value.
-func updateFile(filename, value string, positions runeRangeSlice) error {
-	backwards := make(runeRangeSlice, len(positions))
+func updateFile(filename, value string, positions []runeRange) error {
+	backwards := make([]runeRange, len(positions))
 	copy(backwards, positions)
-	sort.Sort(sort.Reverse(backwards))
+	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {

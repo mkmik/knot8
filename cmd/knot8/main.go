@@ -5,6 +5,9 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -23,8 +26,25 @@ type SetCmd struct {
 	Paths  []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
 }
 
-func (s *SetCmd) Run(ctx *Context) error {
-	files, err := openFileArgs(s.Paths)
+func (s *SetCmd) Run(ctx *Context) (err error) {
+	paths := s.Paths
+
+	if len(s.Paths) == 0 {
+		stdin, err := slurpStdin()
+		paths = []string{stdin}
+		defer func() {
+			if err == nil {
+				if f, err := os.Open(stdin); err != nil {
+					log.Println(err)
+				} else {
+					io.Copy(os.Stdout, f)
+					f.Close()
+				}
+			}
+		}()
+	}
+
+	files, err := openFiles(paths)
 	if err != nil {
 		return err
 	}

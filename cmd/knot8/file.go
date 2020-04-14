@@ -5,6 +5,9 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -12,14 +15,21 @@ import (
 	"github.com/mkmik/multierror"
 )
 
-func openFileArgs(paths []string) ([]*os.File, error) {
-	if len(paths) == 0 {
-		if isatty.IsTerminal(os.Stdin.Fd()) {
-			fmt.Fprintf(os.Stderr, "(reading manifests from standard input; hit ctrl-c if this is not what you wanted)\n")
-		}
-		return []*os.File{os.Stdin}, nil
+func slurpStdin() (string, error) {
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		fmt.Fprintf(os.Stderr, "(reading manifests from standard input; hit ctrl-c if this is not what you wanted)\n")
 	}
-	return openFiles(paths)
+
+	tmp, err := ioutil.TempFile("", "stdin")
+	if err != nil {
+		return "", err
+	}
+	_, err = io.Copy(tmp, os.Stdin)
+	if err != nil {
+		return "", err
+	}
+	log.Printf("SLURPING tmp file %q", tmp.Name())
+	return tmp.Name(), nil
 }
 
 func openFiles(paths []string) ([]*os.File, error) {

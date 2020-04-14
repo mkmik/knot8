@@ -14,7 +14,7 @@ index ea3a8fd..04a2143 100644
          env:
            # Voilá!
            - name: FOO
--            value: foo # 8< knot8.io/foo
+-            value: bar # 8< knot8.io/foo
 +            value: hola # 8< knot8.io/foo
          volumeMounts:
           - name: config
@@ -23,6 +23,6 @@ index ea3a8fd..04a2143 100644
    annotations:
      field.knot8.io/foo: /data/foo
  data:
--  foo: foo # 8< field.knot8.io/foo
+-  foo: bar # 8< field.knot8.io/foo
 +  foo: hola # 8< field.knot8.io/foo
 ```

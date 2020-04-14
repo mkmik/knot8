@@ -4,7 +4,7 @@ define and manipulate "knobs" in K8s manifests
 ## Example
 
 ```sh
-$ head testdir/m1.yaml
+$ cat testdir/m1.yaml
 ```
 ```yaml
 apiVersion: apps/v1
@@ -14,10 +14,16 @@ metadata:
   annotations:
     field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}/value
 spec:
-  selector:
-    matchLabels:
-      app: demo
-...
+... # removed in this readme
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /data/foo
+data:
+  foo: bar # 8< field.knot8.io/foo
 ```
 ```sh
 $ knot8 set testdir/m1.yaml -v foo:hola

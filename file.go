@@ -8,11 +8,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
 )
 
 func openFileArgs(paths []string) ([]*os.File, error) {
 	if len(paths) == 0 {
+		if isatty.IsTerminal(os.Stdin.Fd()) {
+			fmt.Fprintf(os.Stderr, "(reading manifests from standard input; hit ctrl-c if this is not what you wanted)\n")
+		}
 		return []*os.File{os.Stdin}, nil
 	}
 	return openFiles(paths)

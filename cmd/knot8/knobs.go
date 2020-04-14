@@ -4,13 +4,19 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/mkmik/multierror"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
 	"knot8.io/pkg/yptr"
 )
 
@@ -75,10 +81,14 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 	if errs != nil {
 		return multierror.Join(errs)
 	}
+
 	for f, positions := range updates {
 		if err := patchFile(f, v, positions); err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
+	}
+	if errs != nil {
+		return multierror.Join(errs)
 	}
 	return nil
 }
@@ -90,22 +100,55 @@ type runeRange struct {
 
 // patchFile edits a file in place by replacing each of the given rune ranges in the file
 // with a given string value.
+//
+// All valid yaml encodings are supported (UTF-8, UTF16-LE, UTF16-BE) but the input
+// encoding is not currently preserved when writing the output file.
 func patchFile(filename, value string, positions []runeRange) error {
 	backwards := make([]runeRange, len(positions))
 	copy(backwards, positions)
 	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })
 
-	b, err := ioutil.ReadFile(filename)
+	r, err := readFileRunes(filename)
 	if err != nil {
 		return err
 	}
-
 	rvalue := bytes.Runes([]byte(value))
-	r := bytes.Runes(b)
 
 	for _, pos := range backwards {
 		r = append(r[:pos.start], append(rvalue, r[pos.end:]...)...)
 	}
 
-	return ioutil.WriteFile(filename, []byte(string(r)), 0)
+	return writeFileRunes(filename, r)
+}
+
+func readFileRunes(filename string) ([]rune, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	t := unicode.BOMOverride(runes.ReplaceIllFormed())
+	r := bufio.NewReader(transform.NewReader(f, t))
+
+	return readAllRunes(r)
+}
+
+func writeFileRunes(filename string, runes []rune) error {
+	return ioutil.WriteFile(filename, []byte(string(runes)), 0)
+}
+
+// readAllRunes returns a slice of runes. API modeled after ioutil.ReadAll but the implementation is inefficient.
+func readAllRunes(r io.RuneReader) ([]rune, error) {
+	var res []rune
+	for {
+		ch, _, err := r.ReadRune()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		res = append(res, ch)
+	}
+	return res, nil
 }

@@ -4,6 +4,22 @@ define and manipulate "knobs" in K8s manifests
 ## Example
 
 ```sh
+$ head testdir/m1.yaml
+```
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}/value
+spec:
+  selector:
+    matchLabels:
+      app: demo
+...
+```
+```sh
 $ knot8 set testdir/m1.yaml -v foo:hola
 $ git diff
 ```

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	annoPrefix = "knot8.vmware.com/"
+	annoPrefix = "field.knot8.io/"
 )
 
 type Knob struct {

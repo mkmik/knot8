@@ -121,6 +121,9 @@ func patchFile(filename, value string, positions []runeRange) error {
 	return writeFileRunes(filename, r)
 }
 
+// readFileRunes reads a text file encoded as either UTF-8 or UTF-16, both LE and BE
+// (which are the supported encodings of YAML), and return an array of runes which
+// we can operate on in order to implement rune-addressed in-place edits.
 func readFileRunes(filename string) ([]rune, error) {
 	f, err := os.Open(filename)
 	if err != nil {

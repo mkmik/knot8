@@ -16,7 +16,7 @@ type Manifest struct {
 	Metadata   ObjectMetadata `yaml:"metadata"`
 
 	file string
-	raw  interface{}
+	raw  yaml.Node
 }
 
 type ObjectMetadata struct {
@@ -28,23 +28,18 @@ func parseManifests(f *os.File) ([]*Manifest, error) {
 
 	var res []*Manifest
 	for {
-		var i interface{}
-		if err := d.Decode(&i); err == io.EOF {
+		var n yaml.Node
+		if err := d.Decode(&n); err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
 
-		// quick&dirty way to map an in-memory json tree back to a typed Go struct.
-		tmp, err := yaml.Marshal(i)
-		if err != nil {
-			return nil, err
-		}
 		var m Manifest
-		if err := yaml.Unmarshal(tmp, &m); err != nil {
+		if err := n.Decode(&m); err != nil {
 			return nil, err
 		}
-		m.raw = i
+		m.raw = n
 		m.file = f.Name()
 
 		res = append(res, &m)

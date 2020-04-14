@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: demo
   annotations:
-    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}/value
 spec:
   selector:
     matchLabels:
@@ -30,6 +30,7 @@ spec:
           echo sleeping forever
           while true; do sleep 100000; done
         env:
+          # Voilá!
           - name: FOO
             value: foo # 8< knot8.io/foo
         volumeMounts:
@@ -45,6 +46,6 @@ kind: ConfigMap
 metadata:
   name: demo
   annotations:
-    field.knot8.io/foo: yaml(/data/foo)
+    field.knot8.io/foo: /data/foo
 data:
-  foo: foo | # 8< field.knot8.io/foo
+  foo: foo # 8< field.knot8.io/foo

@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/mkmik/multierror"
@@ -19,7 +19,7 @@ var cli struct {
 }
 
 type SetCmd struct {
-	Values []string `short:"v" help:"Values to set"`
+	Values []string `short:"v" help:"Value to set. Format: field:value"`
 	Paths  []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
 }
 
@@ -53,17 +53,25 @@ func (s *SetCmd) Run(ctx *Context) error {
 		return multierror.Join(errs)
 	}
 
-	for _, m := range manifests {
-		log.Printf("--> manifest in %q, contents: %#v\n", m.file, m)
-	}
-
 	knobs, err := parseKnobs(manifests)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("------------")
-	log.Printf("knobs: %v\n", knobs)
+	for _, f := range s.Values {
+		c := strings.SplitN(f, ":", 2)
+		if len(c) != 2 {
+			errs = append(errs, fmt.Errorf("bad -v format %q, missing ':'", f))
+			continue
+		}
+		if err := setKnob(knobs, c[0], c[1]); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if errs != nil {
+		return multierror.Join(errs)
+	}
+
 	return nil
 }
 

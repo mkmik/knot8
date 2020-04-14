@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}/value
+spec:
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - name: app
+        image: debian:10
+        args:
+        - bash
+        - "-c"
+        - |
+          set -e
+          echo From ENV:
+          echo $FOO
+          echo From ConfigMap:
+          cat /cfg/foo
+          echo
+
+          echo sleeping forever
+          while true; do sleep 100000; done
+        env:
+          # Voilá!
+          - name: FOO
+            value: foo # 8< knot8.io/foo
+        volumeMounts:
+         - name: config
+           mountPath: /cfg
+      volumes:
+      - name: config
+        configMap:
+          name: demo

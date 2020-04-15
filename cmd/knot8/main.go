@@ -5,9 +5,7 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"os"
+	"sort"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -18,7 +16,8 @@ type Context struct {
 }
 
 var cli struct {
-	Set SetCmd `cmd help:"Set a knob."`
+	Set    SetCmd    `cmd help:"Set a knob."`
+	Schema SchemaCmd `cmd help:"Show available knobs."`
 }
 
 type SetCmd struct {
@@ -27,29 +26,73 @@ type SetCmd struct {
 }
 
 func (s *SetCmd) Run(ctx *Context) (err error) {
-	paths := s.Paths
+	knobs, printStdin, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == nil {
+			printStdin()
+		}
+	}()
 
-	if len(s.Paths) == 0 {
-		stdin, err := slurpStdin()
-		paths = []string{stdin}
-		defer func() {
-			if err == nil {
-				if f, err := os.Open(stdin); err != nil {
-					log.Println(err)
-				} else {
-					io.Copy(os.Stdout, f)
-					f.Close()
-				}
-			}
-		}()
+	var errs []error
+	for _, f := range s.Values {
+		c := strings.SplitN(f, ":", 2)
+		if len(c) != 2 {
+			errs = append(errs, fmt.Errorf("bad -v format %q, missing ':'", f))
+			continue
+		}
+		if err := setKnob(knobs, c[0], c[1]); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if errs != nil {
+		return multierror.Join(errs)
+	}
+
+	return nil
+}
+
+type SchemaCmd struct {
+	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+}
+
+func (s *SchemaCmd) Run(ctx *Context) error {
+	knobs, _, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Knobs:")
+	var names []string
+	for k := range knobs {
+		names = append(names, k)
+	}
+
+	sort.Strings(names)
+	for _, k := range names {
+		fmt.Printf("  %s\n", k)
+	}
+
+	return nil
+}
+
+// openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
+// It also returns a printStdin callback, meant to be called before exiting successfully in order
+// to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
+func openKnobs(pathArgs []string) (knobs map[string]Knob, printStdin func(), err error) {
+	paths, printStdin, err := wrapStdin(pathArgs)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	files, err := openFiles(paths)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if len(files) == 0 {
-		return fmt.Errorf("cannot find any manifest in %q", s.Paths)
+		return nil, nil, fmt.Errorf("cannot find any manifest in %q", paths)
 	}
 
 	defer func() {
@@ -70,29 +113,11 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 		}
 	}
 	if errs != nil {
-		return multierror.Join(errs)
+		return nil, nil, multierror.Join(errs)
 	}
 
-	knobs, err := parseKnobs(manifests)
-	if err != nil {
-		return err
-	}
-
-	for _, f := range s.Values {
-		c := strings.SplitN(f, ":", 2)
-		if len(c) != 2 {
-			errs = append(errs, fmt.Errorf("bad -v format %q, missing ':'", f))
-			continue
-		}
-		if err := setKnob(knobs, c[0], c[1]); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	if errs != nil {
-		return multierror.Join(errs)
-	}
-
-	return nil
+	knobs, err = parseKnobs(manifests)
+	return knobs, printStdin, err
 }
 
 func main() {

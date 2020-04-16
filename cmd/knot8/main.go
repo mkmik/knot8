@@ -38,9 +38,9 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 
 	var errs []error
 	for _, f := range s.Values {
-		c := strings.SplitN(f, ":", 2)
+		c := strings.SplitN(f, "=", 2)
 		if len(c) != 2 {
-			errs = append(errs, fmt.Errorf("bad -v format %q, missing ':'", f))
+			errs = append(errs, fmt.Errorf("bad -v format %q, missing '='", f))
 			continue
 		}
 		if err := setKnob(knobs, c[0], c[1]); err != nil {

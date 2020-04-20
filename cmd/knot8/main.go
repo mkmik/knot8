@@ -43,18 +43,14 @@ func (s *Setter) UnmarshalText(in []byte) error {
 type SetCmd struct {
 	CommonFlags
 	Values []Setter `arg:"" help:"Value to set. Format: field=value"`
+	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 }
 
-func (s *SetCmd) Run(ctx *Context) (err error) {
+func (s *SetCmd) Run(ctx *Context) error {
 	knobs, printStdin, err := openKnobs(s.Paths)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err == nil {
-			printStdin()
-		}
-	}()
 
 	var errs []error
 	for _, f := range s.Values {
@@ -66,6 +62,12 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 		return multierror.Join(errs)
 	}
 
+	switch s.Format {
+	case "":
+		printStdin()
+	default:
+		return fmt.Errorf("format %q not implemented yet", s.Format)
+	}
 	return nil
 }
 

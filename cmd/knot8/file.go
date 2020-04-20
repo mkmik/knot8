@@ -77,30 +77,25 @@ func manifestsInDir(dir *os.File) ([]string, error) {
 	return res, nil
 }
 
-// wrapStdin handles the case when pathArgs represent stdin.
-//
-// Stdin is slurped into a tmp file and wrapStdin returns a new path slice
-// containing that file. It also returns a function meant to be called
-// to print out the contents of this (possibly modified) tmp file.
-// This function is a no-op in case the pathArgs do not represent a stdin.
-func wrapStdin(pathArgs []string) (paths []string, printStdin func(), err error) {
-	printStdin = func() {}
-	if len(pathArgs) == 0 {
-		stdin, err := slurpStdin()
-		if err != nil {
-			return nil, nil, err
-		}
-		pathArgs = []string{stdin}
-		printStdin = func() {
-			if f, err := os.Open(stdin); err != nil {
-				log.Println(err)
-			} else {
-				io.Copy(os.Stdout, f)
-				f.Close()
-			}
+// deferredCopyFileInto returns a function that will copy filename into w
+// and log any error.
+func deferredCopyFileInto(w io.Writer, filename string) func() {
+	return func() {
+		if err := copyFileInto(w, filename); err != nil {
+			log.Println(err)
 		}
 	}
-	return pathArgs, printStdin, nil
+}
+
+// copyFileInto reads filename and copies it into the writer w.
+func copyFileInto(w io.Writer, filename string) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(w, f)
+	return err
 }
 
 func matchExts(filename string, exts ...string) (bool, error) {

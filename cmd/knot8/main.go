@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -105,6 +106,10 @@ func renderKnobValue(k knobValue) (string, error) {
 		}
 		v = fmt.Sprintf("%s\n%s", style, reindent(body, 2))
 	}
+
+	if k.ptr.Manifest.fromStdin {
+		filename = "-"
+	}
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
 }
 
@@ -135,10 +140,18 @@ func (s *InfoCmd) Run(ctx *Context) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(pathArgs []string) (knobs map[string]Knob, printStdin func(), err error) {
-	paths, printStdin, err := wrapStdin(pathArgs)
-	if err != nil {
-		return nil, nil, err
+func openKnobs(paths []string) (knobs map[string]Knob, printStdin func(), err error) {
+	fromStdin := false
+	printStdin = func() {}
+
+	if len(paths) == 0 {
+		fromStdin = true
+		stdin, err := slurpStdin()
+		if err != nil {
+			return nil, nil, err
+		}
+		paths = []string{stdin}
+		printStdin = deferredCopyFileInto(os.Stdout, stdin)
 	}
 
 	files, err := openFiles(paths)
@@ -160,9 +173,10 @@ func openKnobs(pathArgs []string) (knobs map[string]Knob, printStdin func(), err
 		errs      []error
 	)
 	for _, f := range files {
-		if ms, err := parseManifests(f); err != nil {
+		if ms, err := parseManifests(f, fromStdin); err != nil {
 			errs = append(errs, err)
 		} else {
+
 			manifests = append(manifests, ms...)
 		}
 	}

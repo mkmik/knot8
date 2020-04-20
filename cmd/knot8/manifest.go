@@ -15,15 +15,16 @@ type Manifest struct {
 	Kind       string         `yaml:"kind"`
 	Metadata   ObjectMetadata `yaml:"metadata"`
 
-	file string
-	raw  yaml.Node
+	file      string
+	raw       yaml.Node
+	fromStdin bool
 }
 
 type ObjectMetadata struct {
 	Annotations map[string]string `json:"annotations"`
 }
 
-func parseManifests(f *os.File) ([]*Manifest, error) {
+func parseManifests(f *os.File, fromStdin bool) ([]*Manifest, error) {
 	d := yaml.NewDecoder(f)
 
 	var res []*Manifest
@@ -41,6 +42,7 @@ func parseManifests(f *os.File) ([]*Manifest, error) {
 		}
 		m.raw = n
 		m.file = f.Name()
+		m.fromStdin = fromStdin
 
 		res = append(res, &m)
 

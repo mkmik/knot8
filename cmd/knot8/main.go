@@ -22,12 +22,12 @@ var cli struct {
 }
 
 type CommonFlags struct {
-	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+	Paths []string `name:"filename" short:"f" help:"Filenames or directories containing k8s manifests with knobs." type:"file"`
 }
 
 type SetCmd struct {
 	CommonFlags
-	Values []string `short:"v" help:"Value to set. Format: field:value"`
+	Values []string `arg:"" help:"Value to set. Format: field=value"`
 }
 
 func (s *SetCmd) Run(ctx *Context) (err error) {
@@ -61,7 +61,7 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 
 type GetCmd struct {
 	CommonFlags
-	Field string `short:"v" help:"Field to get."`
+	Field string `arg:"" help:"Field to get."`
 }
 
 func (s *GetCmd) Run(ctx *Context) error {

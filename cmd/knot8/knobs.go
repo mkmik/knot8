@@ -69,6 +69,16 @@ func addKnob(r map[string]Knob, m *Manifest, n, e string) error {
 	return nil
 }
 
+func knobNames(knobs map[string]Knob) []string {
+	var names []string
+	for k := range knobs {
+		names = append(names, k)
+	}
+
+	sort.Strings(names)
+	return names
+}
+
 type knobValue struct {
 	value string
 	ptr   Pointer

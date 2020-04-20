@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -134,13 +133,7 @@ func (s *InfoCmd) Run(ctx *Context) error {
 	}
 
 	fmt.Println("Knobs:")
-	var names []string
-	for k := range knobs {
-		names = append(names, k)
-	}
-
-	sort.Strings(names)
-	for _, k := range names {
+	for _, k := range knobNames(knobs) {
 		fmt.Printf("  %s\n", k)
 	}
 

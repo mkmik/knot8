@@ -26,9 +26,23 @@ type CommonFlags struct {
 	Paths []string `name:"filename" short:"f" help:"Filenames or directories containing k8s manifests with knobs." type:"file"`
 }
 
+type Setter struct {
+	Field string
+	Value string
+}
+
+func (s *Setter) UnmarshalText(in []byte) error {
+	c := strings.SplitN(string(in), "=", 2)
+	if len(c) != 2 {
+		return fmt.Errorf("bad -v format %q, missing '='", in)
+	}
+	s.Field, s.Value = c[0], c[1]
+	return nil
+}
+
 type SetCmd struct {
 	CommonFlags
-	Values []string `arg:"" help:"Value to set. Format: field=value"`
+	Values []Setter `arg:"" help:"Value to set. Format: field=value"`
 }
 
 func (s *SetCmd) Run(ctx *Context) (err error) {
@@ -44,12 +58,7 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 
 	var errs []error
 	for _, f := range s.Values {
-		c := strings.SplitN(f, "=", 2)
-		if len(c) != 2 {
-			errs = append(errs, fmt.Errorf("bad -v format %q, missing '='", f))
-			continue
-		}
-		if err := setKnob(knobs, c[0], c[1]); err != nil {
+		if err := setKnob(knobs, f.Field, f.Value); err != nil {
 			errs = append(errs, err)
 		}
 	}

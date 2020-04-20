@@ -16,8 +16,8 @@ type Context struct {
 }
 
 var cli struct {
-	Set    SetCmd    `cmd help:"Set a knob."`
-	Schema SchemaCmd `cmd help:"Show available knobs."`
+	Set  SetCmd  `cmd help:"Set a knob."`
+	Info InfoCmd `cmd help:"Show available knobs."`
 }
 
 type SetCmd struct {
@@ -54,11 +54,11 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 	return nil
 }
 
-type SchemaCmd struct {
+type InfoCmd struct {
 	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
 }
 
-func (s *SchemaCmd) Run(ctx *Context) error {
+func (s *InfoCmd) Run(ctx *Context) error {
 	knobs, _, err := openKnobs(s.Paths)
 	if err != nil {
 		return err

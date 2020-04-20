@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"testing"
 
-	yptr "knot8.io/pkg/yptr"
 	yaml "gopkg.in/yaml.v3"
+	yptr "knot8.io/pkg/yptr"
 )
 
 func ExampleFind() {

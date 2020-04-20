@@ -17,6 +17,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
+	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/yptr"
 )
 
@@ -60,6 +61,38 @@ func addKnob(r map[string]Knob, m *Manifest, n, e string) error {
 	return nil
 }
 
+type knobValue struct {
+	value string
+	ptr   Pointer
+	line  int
+	loc   runeRange
+}
+
+func getKnob(knobs map[string]Knob, n string) ([]knobValue, error) {
+	k, ok := knobs[n]
+	if !ok {
+		return nil, fmt.Errorf("knob %q not found", n)
+	}
+
+	var (
+		errs []error
+		res  []knobValue
+	)
+	for _, p := range k.Pointers {
+		f, err := yptr.Find(&p.Manifest.raw, p.Expr)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		res = append(res, knobValue{f.Value, p, f.Line, mkRuneRange(f)})
+	}
+	if errs != nil {
+		return nil, multierror.Join(errs)
+	}
+	return res, nil
+}
+
 func setKnob(knobs map[string]Knob, n, v string) error {
 	k, ok := knobs[n]
 	if !ok {
@@ -76,7 +109,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 			continue
 		}
 
-		updates[p.Manifest.file] = append(updates[p.Manifest.file], runeRange{f.Index, f.IndexEnd})
+		updates[p.Manifest.file] = append(updates[p.Manifest.file], mkRuneRange(f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)
@@ -96,6 +129,14 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 type runeRange struct {
 	start int
 	end   int
+}
+
+func mkRuneRange(n *yaml.Node) runeRange {
+	return runeRange{n.Index, n.IndexEnd}
+}
+
+func (r runeRange) slice(src []rune) []rune {
+	return src[r.start:r.end]
 }
 
 // patchFile edits a file in place by replacing each of the given rune ranges in the file

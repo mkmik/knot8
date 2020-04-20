@@ -17,6 +17,7 @@ type Context struct {
 
 var cli struct {
 	Set  SetCmd  `cmd help:"Set a knob."`
+	Get  GetCmd  `cmd help:"Get the value of knob."`
 	Info InfoCmd `cmd help:"Show available knobs."`
 }
 
@@ -52,6 +53,55 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 	}
 
 	return nil
+}
+
+type GetCmd struct {
+	Field string   `short:"v" help:"Field to get."`
+	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+}
+
+func (s *GetCmd) Run(ctx *Context) error {
+	knobs, _, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+
+	values, err := getKnob(knobs, s.Field)
+	if err != nil {
+		return err
+	}
+	for _, v := range values {
+		s, err := renderKnobValue(v)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", s)
+	}
+	return nil
+}
+
+// renderKnobValue reads a knob value from the source stream and reformats it so it displays nicely
+// in the get command output. It preserves the value formatting from the source yaml but re-indents it
+// and drops the comment from the source.
+func renderKnobValue(k knobValue) (string, error) {
+	filename := k.ptr.Manifest.file
+	r, err := readFileRunes(filename)
+	if err != nil {
+		return "", err
+	}
+
+	v := string(k.loc.slice(r))
+	v = strings.TrimSuffix(v, "\n")
+	c := strings.SplitN(v, "\n", 2)
+	if len(c) == 2 {
+		style, body := c[0], c[1]
+		i := strings.Index(style, "#")
+		if i > 0 {
+			style = style[0:i]
+		}
+		v = fmt.Sprintf("%s\n%s", style, reindent(body, 2))
+	}
+	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
 }
 
 type InfoCmd struct {

@@ -21,9 +21,13 @@ var cli struct {
 	Info InfoCmd `cmd help:"Show available knobs."`
 }
 
+type CommonFlags struct {
+	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+}
+
 type SetCmd struct {
+	CommonFlags
 	Values []string `short:"v" help:"Value to set. Format: field:value"`
-	Paths  []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
 }
 
 func (s *SetCmd) Run(ctx *Context) (err error) {
@@ -56,8 +60,8 @@ func (s *SetCmd) Run(ctx *Context) (err error) {
 }
 
 type GetCmd struct {
-	Field string   `short:"v" help:"Field to get."`
-	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+	CommonFlags
+	Field string `short:"v" help:"Field to get."`
 }
 
 func (s *GetCmd) Run(ctx *Context) error {
@@ -105,7 +109,7 @@ func renderKnobValue(k knobValue) (string, error) {
 }
 
 type InfoCmd struct {
-	Paths []string `optional arg:"" help:"Filenames or directories containing k8s manifests with knobs." type:"file" name:"paths"`
+	CommonFlags
 }
 
 func (s *InfoCmd) Run(ctx *Context) error {

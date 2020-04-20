@@ -18,6 +18,7 @@ type Manifest struct {
 	file      string
 	raw       yaml.Node
 	fromStdin bool
+	streamPos int // position in yaml stream
 }
 
 type ObjectMetadata struct {
@@ -28,7 +29,7 @@ func parseManifests(f *os.File, fromStdin bool) ([]*Manifest, error) {
 	d := yaml.NewDecoder(f)
 
 	var res []*Manifest
-	for {
+	for i := 0; ; i++ {
 		var n yaml.Node
 		if err := d.Decode(&n); err == io.EOF {
 			break
@@ -43,6 +44,7 @@ func parseManifests(f *os.File, fromStdin bool) ([]*Manifest, error) {
 		m.raw = n
 		m.file = f.Name()
 		m.fromStdin = fromStdin
+		m.streamPos = i
 
 		res = append(res, &m)
 

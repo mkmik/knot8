@@ -35,6 +35,14 @@ type Pointer struct {
 	Manifest *Manifest
 }
 
+func (p Pointer) findNode() (*yaml.Node, error) {
+	n, err := yptr.Find(&p.Manifest.raw, p.Expr)
+	if n.Kind != yaml.ScalarNode {
+		return nil, fmt.Errorf("only scalar nodes are supported, found: %s", n.ShortTag())
+	}
+	return n, err
+}
+
 func parseKnobs(manifests []*Manifest) (map[string]Knob, error) {
 	res := map[string]Knob{}
 	var errs []error
@@ -79,7 +87,7 @@ func getKnob(knobs map[string]Knob, n string) ([]knobValue, error) {
 		res  []knobValue
 	)
 	for _, p := range k.Pointers {
-		f, err := yptr.Find(&p.Manifest.raw, p.Expr)
+		f, err := p.findNode()
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -103,7 +111,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 
 	var errs []error
 	for _, p := range k.Pointers {
-		f, err := yptr.Find(&p.Manifest.raw, p.Expr)
+		f, err := p.findNode()
 		if err != nil {
 			errs = append(errs, err)
 			continue

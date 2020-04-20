@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -16,9 +17,10 @@ type Context struct {
 }
 
 var cli struct {
-	Set  SetCmd  `cmd help:"Set a knob."`
-	Get  GetCmd  `cmd help:"Get the value of knob."`
-	Info InfoCmd `cmd help:"Show available knobs."`
+	Set   SetCmd   `cmd help:"Set a knob."`
+	Get   GetCmd   `cmd help:"Get the value of knob."`
+	Merge MergeCmd `cmd help:"Merge a new version from upstream."`
+	Info  InfoCmd  `cmd help:"Show available knobs."`
 }
 
 type CommonFlags struct {
@@ -120,6 +122,47 @@ func renderKnobValue(k knobValue) (string, error) {
 		filename = "-"
 	}
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
+}
+
+type MergeCmd struct {
+	CommonFlags
+	Upstream []string `optional arg:"" help:"Filename or URL of the next version of the manifest(s). Collections of files can be fetched via URLs by wrapping them into tar/zip balls."`
+}
+
+func (s *MergeCmd) Run(ctx *Context) error {
+	// This impl is just a quick hack to show a POC;
+	// TODO(mkm): write a real impl
+
+	if len(s.Upstream) > 0 {
+		return fmt.Errorf("only merge with stdin implemented")
+	}
+
+	if len(s.Paths) == 0 {
+		return fmt.Errorf("-f required")
+	}
+
+	knobsL, _, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+
+	knobsU, printStdin, err := openKnobs(s.Upstream)
+	if err != nil {
+		return err
+	}
+
+	for _, n := range knobNames(knobsU) {
+		values, err := getKnob(knobsL, n)
+		if err != nil {
+			return err
+		}
+		log.Printf("GOT knob %q value %q from upstream", n, values[0].value)
+
+		setKnob(knobsU, n, values[0].value)
+	}
+
+	printStdin()
+	return nil
 }
 
 type InfoCmd struct {

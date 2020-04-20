@@ -96,7 +96,6 @@ func renderKnobValue(k knobValue) (string, error) {
 	}
 
 	v := string(k.loc.slice(r))
-	v = strings.TrimSuffix(v, "\n")
 	c := strings.SplitN(v, "\n", 2)
 	if len(c) == 2 {
 		style, body := c[0], c[1]

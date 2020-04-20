@@ -132,7 +132,13 @@ type runeRange struct {
 }
 
 func mkRuneRange(n *yaml.Node) runeRange {
-	return runeRange{n.Index, n.IndexEnd}
+	// IndexEnd incorrectly includes trailing newline when strings are multiline.
+	// TODO(mkm): remove hack once upstream is patched
+	d := 0
+	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
+		d = 1
+	}
+	return runeRange{n.Index, n.IndexEnd - d}
 }
 
 func (r runeRange) slice(src []rune) []rune {

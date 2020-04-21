@@ -26,7 +26,7 @@ data:
   foo: bar # 8< field.knot8.io/foo
 ```
 ```sh
-$ knot8 set testdir/m1.yaml -v foo=hola
+$ knot8 set -f testdir/m1.yaml foo=hola
 $ git diff
 ```
 ```diff

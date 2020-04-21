@@ -101,7 +101,7 @@ func (s *GetCmd) Run(ctx *Context) error {
 // in the get command output. It preserves the value formatting from the source yaml but re-indents it
 // and drops the comment from the source.
 func renderKnobValue(k knobValue) (string, error) {
-	filename := k.ptr.Manifest.file
+	filename := k.ptr.Manifest.source.file
 	r, err := readFileRunes(filename)
 	if err != nil {
 		return "", err
@@ -118,7 +118,7 @@ func renderKnobValue(k knobValue) (string, error) {
 		v = fmt.Sprintf("%s\n%s", style, reindent(body, 2))
 	}
 
-	if k.ptr.Manifest.fromStdin {
+	if k.ptr.Manifest.source.fromStdin {
 		filename = "-"
 	}
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil

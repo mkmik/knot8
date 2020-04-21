@@ -15,14 +15,18 @@ type Manifest struct {
 	Kind       string         `yaml:"kind"`
 	Metadata   ObjectMetadata `yaml:"metadata"`
 
-	file      string
-	raw       yaml.Node
-	fromStdin bool
-	streamPos int // position in yaml stream
+	raw    yaml.Node
+	source manifestSource
 }
 
 type ObjectMetadata struct {
 	Annotations map[string]string `json:"annotations"`
+}
+
+type manifestSource struct {
+	file      string
+	fromStdin bool
+	streamPos int // position in yaml stream
 }
 
 func parseManifests(f *os.File, fromStdin bool) ([]*Manifest, error) {
@@ -42,12 +46,13 @@ func parseManifests(f *os.File, fromStdin bool) ([]*Manifest, error) {
 			return nil, err
 		}
 		m.raw = n
-		m.file = f.Name()
-		m.fromStdin = fromStdin
-		m.streamPos = i
+		m.source = manifestSource{
+			file:      f.Name(),
+			fromStdin: fromStdin,
+			streamPos: i,
+		}
 
 		res = append(res, &m)
-
 	}
 	return res, nil
 }

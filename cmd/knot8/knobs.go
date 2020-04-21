@@ -126,8 +126,8 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 			errs = append(errs, err)
 			continue
 		}
-
-		updates[p.Manifest.file] = append(updates[p.Manifest.file], mkRuneRange(f))
+		file := p.Manifest.source.file
+		updates[file] = append(updates[file], mkRuneRange(f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)

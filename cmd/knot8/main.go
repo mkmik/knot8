@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -48,7 +47,7 @@ type SetCmd struct {
 }
 
 func (s *SetCmd) Run(ctx *Context) error {
-	knobs, printStdin, err := openKnobs(s.Paths)
+	knobs, commit, err := openKnobs(s.Paths)
 	if err != nil {
 		return err
 	}
@@ -65,7 +64,9 @@ func (s *SetCmd) Run(ctx *Context) error {
 
 	switch s.Format {
 	case "":
-		printStdin()
+		if err := commit(); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("format %q not implemented yet", s.Format)
 	}
@@ -146,7 +147,7 @@ func (s *MergeCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	knobsU, printStdin, err := openKnobs(s.Upstream)
+	knobsU, commit, err := openKnobs(s.Upstream)
 	if err != nil {
 		return err
 	}
@@ -161,8 +162,7 @@ func (s *MergeCmd) Run(ctx *Context) error {
 		setKnob(knobsU, n, values[0].value)
 	}
 
-	printStdin()
-	return nil
+	return commit()
 }
 
 type InfoCmd struct {
@@ -186,9 +186,8 @@ func (s *InfoCmd) Run(ctx *Context) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string) (knobs map[string]Knob, printStdin func(), err error) {
+func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err error) {
 	fromStdin := false
-	printStdin = func() {}
 
 	if len(paths) == 0 {
 		fromStdin = true
@@ -197,7 +196,6 @@ func openKnobs(paths []string) (knobs map[string]Knob, printStdin func(), err er
 			return nil, nil, err
 		}
 		paths = []string{stdin}
-		printStdin = deferredCopyFileInto(os.Stdout, stdin)
 	}
 
 	files, err := openFiles(paths)
@@ -215,14 +213,13 @@ func openKnobs(paths []string) (knobs map[string]Knob, printStdin func(), err er
 	}()
 
 	var (
-		manifests []*Manifest
+		manifests Manifests
 		errs      []error
 	)
 	for _, f := range files {
 		if ms, err := parseManifests(f, fromStdin); err != nil {
 			errs = append(errs, err)
 		} else {
-
 			manifests = append(manifests, ms...)
 		}
 	}
@@ -231,7 +228,7 @@ func openKnobs(paths []string) (knobs map[string]Knob, printStdin func(), err er
 	}
 
 	knobs, err = parseKnobs(manifests)
-	return knobs, printStdin, err
+	return knobs, manifests.Commit, err
 }
 
 func main() {

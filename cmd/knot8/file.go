@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -75,16 +74,6 @@ func manifestsInDir(dir *os.File) ([]string, error) {
 		}
 	}
 	return res, nil
-}
-
-// deferredCopyFileInto returns a function that will copy filename into w
-// and log any error.
-func deferredCopyFileInto(w io.Writer, filename string) func() {
-	return func() {
-		if err := copyFileInto(w, filename); err != nil {
-			log.Println(err)
-		}
-	}
 }
 
 // copyFileInto reads filename and copies it into the writer w.

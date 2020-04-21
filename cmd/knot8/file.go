@@ -4,15 +4,64 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
 )
+
+// A shadowFile is in-memory copy of a file that can be commited back to disk.
+type shadowFile struct {
+	name string
+	buf  []rune
+}
+
+func newShadowFile(f *os.File) (shadowFile, error) {
+	r, err := readFileRunes(f)
+	if err != nil {
+		return shadowFile{}, err
+	}
+	return shadowFile{name: f.Name(), buf: r}, nil
+}
+
+func (m *shadowFile) Commit() error {
+	return writeFileRunes(m.name, m.buf)
+}
+
+type runeRange struct {
+	start int
+	end   int
+}
+
+func (r runeRange) slice(src []rune) []rune {
+	return src[r.start:r.end]
+}
+
+// patch edits a file in place by replacing each of the given rune ranges in the file
+// buf with a given string value.
+func (f *shadowFile) patch(value string, positions []runeRange) error {
+	backwards := make([]runeRange, len(positions))
+	copy(backwards, positions)
+	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })
+
+	rvalue := bytes.Runes([]byte(value))
+
+	for _, pos := range backwards {
+		f.buf = append(f.buf[:pos.start], append(rvalue, f.buf[pos.end:]...)...)
+	}
+
+	return nil
+}
 
 // openFiles opens all files referenced by the paths slice.
 // If a path points to a directory, openFiles will open all *.yaml files contained in it.
@@ -113,4 +162,31 @@ func slurpStdin() (string, error) {
 		return "", err
 	}
 	return tmp.Name(), nil
+}
+
+// readFileRunes reads a text file encoded as either UTF-8 or UTF-16, both LE and BE
+// (which are the supported encodings of YAML), and return an array of runes which
+// we can operate on in order to implement rune-addressed in-place edits.
+func readFileRunes(r io.Reader) ([]rune, error) {
+	t := unicode.BOMOverride(runes.ReplaceIllFormed())
+	return readAllRunes(bufio.NewReader(transform.NewReader(r, t)))
+}
+
+func writeFileRunes(filename string, runes []rune) error {
+	return ioutil.WriteFile(filename, []byte(string(runes)), 0)
+}
+
+// readAllRunes returns a slice of runes. API modeled after ioutil.ReadAll but the implementation is inefficient.
+func readAllRunes(r io.RuneReader) ([]rune, error) {
+	var res []rune
+	for {
+		ch, _, err := r.ReadRune()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		res = append(res, ch)
+	}
+	return res, nil
 }

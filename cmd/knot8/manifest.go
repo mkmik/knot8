@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 
@@ -25,13 +26,13 @@ type ObjectMetadata struct {
 }
 
 type manifestSource struct {
-	file      string
+	file      shadowFile
 	fromStdin bool
 	streamPos int // position in yaml stream
 }
 
-func parseManifests(f *os.File, fromStdin bool) (Manifests, error) {
-	d := yaml.NewDecoder(f)
+func parseManifests(f shadowFile, fromStdin bool) (Manifests, error) {
+	d := yaml.NewDecoder(bytes.NewReader([]byte(string(f.buf))))
 
 	var res []*Manifest
 	for i := 0; ; i++ {
@@ -46,7 +47,7 @@ func parseManifests(f *os.File, fromStdin bool) (Manifests, error) {
 			return nil, err
 		}
 		m.source = manifestSource{
-			file:      f.Name(),
+			file:      f,
 			fromStdin: fromStdin,
 			streamPos: i,
 		}
@@ -57,8 +58,12 @@ func parseManifests(f *os.File, fromStdin bool) (Manifests, error) {
 }
 
 func (m *Manifest) Commit() error {
+	if err := m.source.file.Commit(); err != nil {
+		return err
+	}
+
 	if m.source.fromStdin {
-		return copyFileInto(os.Stdout, m.source.file)
+		return copyFileInto(os.Stdout, m.source.file.name)
 	}
 	return nil
 }

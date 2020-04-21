@@ -4,19 +4,11 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/mkmik/multierror"
-	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/yptr"
 )
@@ -117,7 +109,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 		return fmt.Errorf("knob %q not found", n)
 	}
 
-	updatesByFile := map[string][]runeRange{}
+	updatesByFile := map[*shadowFile][]runeRange{}
 
 	var errs []error
 	for _, p := range k.Pointers {
@@ -126,7 +118,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 			errs = append(errs, err)
 			continue
 		}
-		file := p.Manifest.source.file
+		file := &p.Manifest.source.file
 		updatesByFile[file] = append(updatesByFile[file], mkRuneRange(f))
 	}
 	if errs != nil {
@@ -134,7 +126,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 	}
 
 	for f, positions := range updatesByFile {
-		if err := patchFile(f, v, positions); err != nil {
+		if err := f.patch(v, positions); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}
@@ -142,11 +134,6 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 		return multierror.Join(errs)
 	}
 	return nil
-}
-
-type runeRange struct {
-	start int
-	end   int
 }
 
 func mkRuneRange(n *yaml.Node) runeRange {
@@ -157,66 +144,4 @@ func mkRuneRange(n *yaml.Node) runeRange {
 		d = 1
 	}
 	return runeRange{n.Index, n.IndexEnd - d}
-}
-
-func (r runeRange) slice(src []rune) []rune {
-	return src[r.start:r.end]
-}
-
-// patchFile edits a file in place by replacing each of the given rune ranges in the file
-// with a given string value.
-//
-// All valid yaml encodings are supported (UTF-8, UTF16-LE, UTF16-BE) but the input
-// encoding is not currently preserved when writing the output file.
-func patchFile(filename, value string, positions []runeRange) error {
-	backwards := make([]runeRange, len(positions))
-	copy(backwards, positions)
-	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })
-
-	r, err := readFileRunes(filename)
-	if err != nil {
-		return err
-	}
-	rvalue := bytes.Runes([]byte(value))
-
-	for _, pos := range backwards {
-		r = append(r[:pos.start], append(rvalue, r[pos.end:]...)...)
-	}
-
-	return writeFileRunes(filename, r)
-}
-
-// readFileRunes reads a text file encoded as either UTF-8 or UTF-16, both LE and BE
-// (which are the supported encodings of YAML), and return an array of runes which
-// we can operate on in order to implement rune-addressed in-place edits.
-func readFileRunes(filename string) ([]rune, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	t := unicode.BOMOverride(runes.ReplaceIllFormed())
-	r := bufio.NewReader(transform.NewReader(f, t))
-
-	return readAllRunes(r)
-}
-
-func writeFileRunes(filename string, runes []rune) error {
-	return ioutil.WriteFile(filename, []byte(string(runes)), 0)
-}
-
-// readAllRunes returns a slice of runes. API modeled after ioutil.ReadAll but the implementation is inefficient.
-func readAllRunes(r io.RuneReader) ([]rune, error) {
-	var res []rune
-	for {
-		ch, _, err := r.ReadRune()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		res = append(res, ch)
-	}
-	return res, nil
 }

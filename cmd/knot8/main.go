@@ -102,11 +102,9 @@ func (s *GetCmd) Run(ctx *Context) error {
 // in the get command output. It preserves the value formatting from the source yaml but re-indents it
 // and drops the comment from the source.
 func renderKnobValue(k knobValue) (string, error) {
-	filename := k.ptr.Manifest.source.file
-	r, err := readFileRunes(filename)
-	if err != nil {
-		return "", err
-	}
+	file := k.ptr.Manifest.source.file
+	filename := file.name
+	r := file.buf
 
 	v := string(k.loc.slice(r))
 	c := strings.SplitN(v, "\n", 2)
@@ -217,7 +215,10 @@ func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err 
 		errs      []error
 	)
 	for _, f := range files {
-		if ms, err := parseManifests(f, fromStdin); err != nil {
+		s, err := newShadowFile(f)
+		if err != nil {
+			errs = append(errs, err)
+		} else if ms, err := parseManifests(s, fromStdin); err != nil {
 			errs = append(errs, err)
 		} else {
 			manifests = append(manifests, ms...)

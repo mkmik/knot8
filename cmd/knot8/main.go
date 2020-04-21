@@ -117,9 +117,6 @@ func renderKnobValue(k knobValue) (string, error) {
 		v = fmt.Sprintf("%s\n%s", style, reindent(body, 2))
 	}
 
-	if k.ptr.Manifest.source.fromStdin {
-		filename = "-"
-	}
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
 }
 
@@ -185,40 +182,27 @@ func (s *InfoCmd) Run(ctx *Context) error {
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
 func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err error) {
-	fromStdin := false
-
 	if len(paths) == 0 {
-		fromStdin = true
-		stdin, err := slurpStdin()
-		if err != nil {
-			return nil, nil, err
-		}
-		paths = []string{stdin}
+		paths = []string{"-"}
 	}
 
-	files, err := openFiles(paths)
+	filenames, err := expandPaths(paths)
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(files) == 0 {
+	if len(filenames) == 0 {
 		return nil, nil, fmt.Errorf("cannot find any manifest in %q", paths)
 	}
-
-	defer func() {
-		for _, f := range files {
-			f.Close()
-		}
-	}()
 
 	var (
 		manifests Manifests
 		errs      []error
 	)
-	for _, f := range files {
+	for _, f := range filenames {
 		s, err := newShadowFile(f)
 		if err != nil {
 			errs = append(errs, err)
-		} else if ms, err := parseManifests(s, fromStdin); err != nil {
+		} else if ms, err := parseManifests(s); err != nil {
 			errs = append(errs, err)
 		} else {
 			manifests = append(manifests, ms...)

@@ -6,7 +6,6 @@ package main
 import (
 	"bytes"
 	"io"
-	"os"
 
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
@@ -26,12 +25,11 @@ type ObjectMetadata struct {
 }
 
 type manifestSource struct {
-	file      shadowFile
-	fromStdin bool
+	file      *shadowFile
 	streamPos int // position in yaml stream
 }
 
-func parseManifests(f shadowFile, fromStdin bool) (Manifests, error) {
+func parseManifests(f *shadowFile) (Manifests, error) {
 	d := yaml.NewDecoder(bytes.NewReader([]byte(string(f.buf))))
 
 	var res []*Manifest
@@ -48,7 +46,6 @@ func parseManifests(f shadowFile, fromStdin bool) (Manifests, error) {
 		}
 		m.source = manifestSource{
 			file:      f,
-			fromStdin: fromStdin,
 			streamPos: i,
 		}
 
@@ -57,24 +54,19 @@ func parseManifests(f shadowFile, fromStdin bool) (Manifests, error) {
 	return res, nil
 }
 
-func (m *Manifest) Commit() error {
-	if err := m.source.file.Commit(); err != nil {
-		return err
-	}
-
-	if m.source.fromStdin {
-		return copyFileInto(os.Stdout, m.source.file.name)
-	}
-	return nil
-}
-
 type Manifests []*Manifest
 
 // Commit saves changes made to the manifests
 func (ms Manifests) Commit() error {
-	var errs []error
+	uniq := map[*shadowFile]struct{}{}
+
 	for _, m := range ms {
-		if err := m.Commit(); err != nil {
+		uniq[m.source.file] = struct{}{}
+	}
+
+	var errs []error
+	for f := range uniq {
+		if err := f.Commit(); err != nil {
 			errs = append(errs, err)
 		}
 	}

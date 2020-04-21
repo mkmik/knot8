@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -122,39 +121,29 @@ func renderKnobValue(k knobValue) (string, error) {
 
 type MergeCmd struct {
 	CommonFlags
-	Upstream []string `optional:"" arg:"" help:"Filename or URL of the next version of the manifest(s). Collections of files can be fetched via URLs by wrapping them into tar/zip balls."`
+	Sources []string `arg:"" help:"Filenames of manifests whose changed fields will be applied on the workspace manifests (selected by -f)."`
 }
 
 func (s *MergeCmd) Run(ctx *Context) error {
 	// This impl is just a quick hack to show a POC;
 	// TODO(mkm): write a real impl
 
-	if len(s.Upstream) > 0 {
-		return fmt.Errorf("only merge with stdin implemented")
-	}
-
-	if len(s.Paths) == 0 {
-		return fmt.Errorf("-f required")
-	}
-
-	knobsL, _, err := openKnobs(s.Paths)
+	knobsL, commit, err := openKnobs(s.Paths)
 	if err != nil {
 		return err
 	}
 
-	knobsU, commit, err := openKnobs(s.Upstream)
+	knobsS, _, err := openKnobs(s.Sources)
 	if err != nil {
 		return err
 	}
 
-	for _, n := range knobNames(knobsU) {
-		values, err := getKnob(knobsL, n)
+	for _, n := range knobNames(knobsS) {
+		values, err := getKnob(knobsS, n)
 		if err != nil {
 			return err
 		}
-		log.Printf("GOT knob %q value %q from upstream", n, values[0].value)
-
-		setKnob(knobsU, n, values[0].value)
+		setKnob(knobsL, n, values[0].value)
 	}
 
 	return commit()

@@ -43,7 +43,7 @@ func Find(root *yaml.Node, ptr string) (*yaml.Node, error) {
 		return nil, err
 	}
 	if len(res) > 1 {
-		return nil, fmt.Errorf("Got %d matches: %w", len(res), ErrTooManyResults)
+		return nil, fmt.Errorf("got %d matches: %w", len(res), ErrTooManyResults)
 	}
 	if len(res) == 0 {
 		return nil, fmt.Errorf("bad state while finding %q: res is empty but error is: %v", ptr, err)

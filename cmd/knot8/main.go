@@ -16,10 +16,10 @@ type Context struct {
 }
 
 var cli struct {
-	Set   SetCmd   `cmd help:"Set a knob."`
-	Get   GetCmd   `cmd help:"Get the value of knob."`
-	Merge MergeCmd `cmd help:"Merge a new version from upstream."`
-	Info  InfoCmd  `cmd help:"Show available knobs."`
+	Set   SetCmd   `cmd:"" help:"Set a knob."`
+	Get   GetCmd   `cmd:"" help:"Get the value of knob."`
+	Merge MergeCmd `cmd:"" help:"Merge a new version from upstream."`
+	Info  InfoCmd  `cmd:"" help:"Show available knobs."`
 }
 
 type CommonFlags struct {
@@ -122,7 +122,7 @@ func renderKnobValue(k knobValue) (string, error) {
 
 type MergeCmd struct {
 	CommonFlags
-	Upstream []string `optional arg:"" help:"Filename or URL of the next version of the manifest(s). Collections of files can be fetched via URLs by wrapping them into tar/zip balls."`
+	Upstream []string `optional:"" arg:"" help:"Filename or URL of the next version of the manifest(s). Collections of files can be fetched via URLs by wrapping them into tar/zip balls."`
 }
 
 func (s *MergeCmd) Run(ctx *Context) error {

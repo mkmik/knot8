@@ -15,10 +15,9 @@ type Context struct {
 }
 
 var cli struct {
-	Set   SetCmd   `cmd:"" help:"Set a knob."`
-	Get   GetCmd   `cmd:"" help:"Get the value of knob."`
-	Merge MergeCmd `cmd:"" help:"Merge a new version from upstream."`
-	Info  InfoCmd  `cmd:"" help:"Show available knobs."`
+	Set  SetCmd  `cmd:"" help:"Set a knob."`
+	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
+	Info InfoCmd `cmd:"" help:"Show available knobs."`
 }
 
 type CommonFlags struct {
@@ -41,7 +40,8 @@ func (s *Setter) UnmarshalText(in []byte) error {
 
 type SetCmd struct {
 	CommonFlags
-	Values []Setter `arg:"" help:"Value to set. Format: field=value"`
+	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value"`
+	From   []string `name:"from" type:"file" help:"Read values from one or more files. The values will be read from not8 annotated k8s resources."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 }
 
@@ -51,8 +51,17 @@ func (s *SetCmd) Run(ctx *Context) error {
 		return err
 	}
 
+	values := s.Values
+	if len(s.From) > 0 {
+		fromValues, err := settersFromFiles(s.From)
+		if err != nil {
+			return err
+		}
+		values = append(fromValues, values...)
+	}
+
 	var errs []error
-	for _, f := range s.Values {
+	for _, f := range values {
 		if err := setKnob(knobs, f.Field, f.Value); err != nil {
 			errs = append(errs, err)
 		}
@@ -70,6 +79,26 @@ func (s *SetCmd) Run(ctx *Context) error {
 		return fmt.Errorf("format %q not implemented yet", s.Format)
 	}
 	return nil
+}
+
+func settersFromFiles(paths []string) ([]Setter, error) {
+	knobs, _, err := openKnobs(paths)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []Setter
+	for _, n := range knobNames(knobs) {
+		values, err := getKnob(knobs, n)
+		if err != nil {
+			return nil, err
+		}
+		if !allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value }) {
+			return nil, fmt.Errorf("values pointed by field %q are not unique", n)
+		}
+		res = append(res, Setter{n, values[0].value})
+	}
+	return res, nil
 }
 
 type GetCmd struct {
@@ -117,36 +146,6 @@ func renderKnobValue(k knobValue) (string, error) {
 	}
 
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
-}
-
-type MergeCmd struct {
-	CommonFlags
-	Sources []string `arg:"" help:"Filenames of manifests whose changed fields will be applied on the workspace manifests (selected by -f)."`
-}
-
-func (s *MergeCmd) Run(ctx *Context) error {
-	// This impl is just a quick hack to show a POC;
-	// TODO(mkm): write a real impl
-
-	knobsL, commit, err := openKnobs(s.Paths)
-	if err != nil {
-		return err
-	}
-
-	knobsS, _, err := openKnobs(s.Sources)
-	if err != nil {
-		return err
-	}
-
-	for _, n := range knobNames(knobsS) {
-		values, err := getKnob(knobsS, n)
-		if err != nil {
-			return err
-		}
-		setKnob(knobsL, n, values[0].value)
-	}
-
-	return commit()
 }
 
 type InfoCmd struct {

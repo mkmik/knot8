@@ -38,3 +38,15 @@ func mapLines(s string, f func(string) string) string {
 	}
 	return strings.Join(lines, "\n")
 }
+
+// allSame returns true if all elements of a sequence of lenght l are the same.
+// The equality of the elements of the slice is evaluated via a caller supplied predicate,
+// p that must returns true the ith and the jth element are the same.
+func allSame(l int, p func(i, j int) bool) bool {
+	for i := 1; i < l; i++ {
+		if !p(0, i) {
+			return false
+		}
+	}
+	return true
+}

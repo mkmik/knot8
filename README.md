@@ -72,6 +72,7 @@ Yes, I know, it sounds outrageous but you might learn to stop worrying and love 
 $ knot8 set -f testdata/m1.yaml foo=hola
 $ git status -s -b
 ```
+```
 ## master...origin/master
  M testdata/m1.yaml
 ```
@@ -81,13 +82,13 @@ $ git status -s -b
 As you can see from the diffs `knot8 set` only changes the values themselves.
 You could make those changes manually (or with some other tool) if you so wish!
 
-```
+```sh
 $ vim testdata/m1.yaml
 ```
 
 or:
 
-```
+```sh
 $ sed 's/bar/hola/' -i testdata/m1.yaml
 ```
 

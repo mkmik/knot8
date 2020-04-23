@@ -34,7 +34,7 @@ spec:
           - name: BAR
             value: OK
           - name: FOO
-            value: bar # 8< knot8.io/foo
+            value: bar # See ^^^ knot8.io/foo
         volumeMounts:
          - name: config
            mountPath: /cfg
@@ -50,4 +50,4 @@ metadata:
   annotations:
     field.knot8.io/foo: /data/foo
 data:
-  foo: bar # 8< field.knot8.io/foo
+  foo: bar # See ^^^ field.knot8.io/foo

@@ -28,7 +28,7 @@ spec:
           while true; do sleep 100000; done
         env:
           - name: FOO
-            value: foo # 8< knot8.io/foo
+            value: foo # See ^^^ knot8.io/foo
           - name: BAZ
             valueFrom:
               secretKeyRef:

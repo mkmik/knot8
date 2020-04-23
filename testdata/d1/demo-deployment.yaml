@@ -32,7 +32,7 @@ spec:
         env:
           # Voilá!
           - name: FOO
-            value: foo # 8< knot8.io/foo
+            value: foo # See ^^^ knot8.io/foo
         volumeMounts:
          - name: config
            mountPath: /cfg

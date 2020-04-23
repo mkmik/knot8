@@ -32,7 +32,7 @@ spec:
         env:
           # Voilá!
           - name: FOO
-            value: | # 8< knot8.io/foo
+            value: | # See ^^^ knot8.io/foo
               bar
               baz
         volumeMounts:
@@ -50,6 +50,6 @@ metadata:
   annotations:
     field.knot8.io/foo: /data/foo
 data:
-  foo: | # 8< field.knot8.io/foo
+  foo: | # See ^^^ field.knot8.io/foo
     bar
     baz

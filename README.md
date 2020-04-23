@@ -55,33 +55,66 @@ $ diff -u testdata/m1.yaml /tmp/c1.yaml
 +  foo: hola # See ^^^ field.knot8.io/foo
 ```
 
+### Take values from files
+
+```sh
+$ knot8 set <testdata/m1.yaml --from values.yaml >/tmp/c1.yaml
+```
+
+Where values.yaml file is a YAML manifest file of any kind containing knot8 annotated fields.
+
 ### In-place edits
 
 You can even mutate the file in-place!
-Yes, I know, it sounds outrageous but you might learn to stop worrying and love the knot8 merge feature.
+Yes, I know, it sounds outrageous but you might learn to stop worrying and love the knot8 merge feature (see next section).
 
 ```sh
 $ knot8 set -f testdata/m1.yaml foo=hola
-$ git diff
+$ git status -s -b
 ```
-```diff
-diff --git testdata/m1.yaml testdata/m1.yaml
-index ea3a8fd..04a2143 100644
---- testdata/m1.yaml
-+++ testdata/m1.yaml
-@@ -32,7 +32,7 @@ spec:
-         env:
-           # Voilá!
-           - name: FOO
--            value: bar # See ^^^ field.knot8.io/foo
-+            value: hola # See ^^^ field.knot8.io/foo
-         volumeMounts:
-          - name: config
-            mountPath: /cfg
-@@ -48,4 +48,4 @@ metadata:
-   annotations:
-     field.knot8.io/foo: /data/foo
- data:
--  foo: bar # See ^^^ field.knot8.io/foo
-+  foo: hola # See ^^^ field.knot8.io/foo
+## master...origin/master
+ M testdata/m1.yaml
 ```
+
+### Manual edits
+
+As you can see from the diffs `knot8 set` only changes the values themselves.
+You could make those changes manually (or with some other tool) if you so wish!
+
+```
+$ vim testdata/m1.yaml
+```
+
+or:
+
+```
+$ sed 's/bar/hola/' -i testdata/m1.yaml
+```
+
+Usually `knot8` will do a better job finding all the fields, but in principle they are just simple edits
+to your files, no magic voodoo.
+
+### Merge upstream changes
+
+You can upgrade a manifest to a new version while retaining all the local changes made to the fields.
+
+You can get the new version of the manifest from any HTTP server:
+
+```sh
+$ knot8 pull -f testdata/m1.yaml https://github.com/some/app/releases/download/v1.2.3/app.yaml
+```
+
+Or any source supported by the [go-getter](https://github.com/hashicorp/go-getter#url-format) url-format:
+
+```sh
+$ knot8 pull -f testdata/m1.yaml https://github.com/some/app//app.yaml?ref=dev
+```
+
+The algorithm is a 3-way merge between:
+
+a. your current file.
+b. the new upstream.
+c. the common baseline.
+
+The common baseline can be provided explicitly, but usually you'll rely on the original file having
+a `knot8.io/base` annotation with a snapshot of the original values that will later become useful as a baseline.

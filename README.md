@@ -71,8 +71,6 @@ Yes, I know, it sounds outrageous but you might learn to stop worrying and love 
 ```sh
 $ knot8 set -f testdata/m1.yaml foo=hola
 $ git status -s -b
-```
-```
 ## master...origin/master
  M testdata/m1.yaml
 ```
@@ -113,9 +111,9 @@ $ knot8 pull -f testdata/m1.yaml https://github.com/some/app//app.yaml?ref=dev
 
 The algorithm is a 3-way merge between:
 
-a. your current file.
-b. the new upstream.
-c. the common baseline.
+1. your current file.
+2. the new upstream.
+3. the common baseline.
 
 The common baseline can be provided explicitly, but usually you'll rely on the original file having
 a `knot8.io/base` annotation with a snapshot of the original values that will later become useful as a baseline.

@@ -202,7 +202,7 @@ func checkKnobs(knobs map[string]Knob) error {
 		values, err := getKnob(knobs, n)
 		if err != nil {
 			errs = append(errs, err)
-		} else if !allSame(values) {
+		} else if !allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value }) {
 			errs = append(errs, fmt.Errorf("values pointed by field %q are not unique", n))
 		}
 	}

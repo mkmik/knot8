@@ -78,12 +78,7 @@ type knobValue struct {
 	loc   runeRange
 }
 
-type knobValues []knobValue
-
-func (s knobValues) Len() int             { return len(s) }
-func (s knobValues) Equals(i, j int) bool { return s[i].value == s[j].value }
-
-func getKnob(knobs map[string]Knob, n string) (knobValues, error) {
+func getKnob(knobs map[string]Knob, n string) ([]knobValue, error) {
 	k, ok := knobs[n]
 	if !ok {
 		return nil, fmt.Errorf("knob %q not found", n)
@@ -91,7 +86,7 @@ func getKnob(knobs map[string]Knob, n string) (knobValues, error) {
 
 	var (
 		errs []error
-		res  knobValues
+		res  []knobValue
 	)
 	for _, p := range k.Pointers {
 		f, err := p.findNode()

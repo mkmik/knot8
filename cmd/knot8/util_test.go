@@ -23,8 +23,8 @@ func TestAllSameString(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			eq := sliceEqFunc(len(tc.s), func(i, j int) bool { return tc.s[i] == tc.s[j] })
-			if got, want := allSame(eq), tc.ok; got != want {
+			ok := allSame(len(tc.s), func(i, j int) bool { return tc.s[i] == tc.s[j] })
+			if got, want := ok, tc.ok; got != want {
 				t.Errorf("got: %v, want: %v", got, want)
 			}
 		})

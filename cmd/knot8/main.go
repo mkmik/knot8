@@ -6,10 +6,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/mkmik/multierror"
+	"gopkg.in/yaml.v3"
 )
 
 type Context struct {
@@ -88,6 +90,7 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if err := checkKnobs(knobs); err != nil {
 		return nil, err
 	}
@@ -100,7 +103,63 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 		}
 		res = append(res, Setter{n, values[0].value})
 	}
+
+	simple, err := openSimplifiedValues(paths)
+	if err != nil {
+		return nil, err
+	}
+	res = append(res, simple...)
+
 	return res, nil
+}
+
+func openSimplifiedValues(paths []string) ([]Setter, error) {
+	var (
+		res  []Setter
+		errs []error
+		all  = map[string]string{}
+	)
+	for _, path := range paths {
+		values, err := parseSimplifiedValues(path)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		for k, v := range values {
+			if old, ok := all[k]; ok && old != v {
+				errs = append(errs, errNotUniqueValue{fmt.Errorf("value in field %q is not unique", k)})
+			} else {
+				all[k] = v
+			}
+		}
+	}
+	if errs != nil {
+		return nil, multierror.Join(errs)
+	}
+	for k, v := range all {
+		res = append(res, Setter{k, v})
+	}
+	return res, nil
+}
+
+func parseSimplifiedValues(path string) (map[string]string, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var m Manifest
+	if err := yaml.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	if m.APIVersion != "" || m.Kind != "" {
+		return nil, nil
+	}
+
+	var values map[string]string
+	if err := yaml.Unmarshal(b, &values); err != nil {
+		return nil, err
+	}
+	return values, nil
 }
 
 type GetCmd struct {

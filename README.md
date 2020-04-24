@@ -58,9 +58,9 @@ $ diff -u testdata/m1.yaml /tmp/c1.yaml
 ### Take values from files
 
 ```sh
-$ cat values.yaml
+$ cat testdata/values.yaml
 foo: hola
-$ knot8 set <testdata/m1.yaml --from values.yaml >/tmp/c1.yaml
+$ knot8 set <testdata/m1.yaml --from testdata/values.yaml >/tmp/c1.yaml
 ```
 
 Where values.yaml file can also be a YAML manifest file of any kind containing knot8 annotated fields.

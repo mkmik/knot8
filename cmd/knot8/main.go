@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -18,6 +19,7 @@ var cli struct {
 	Set  SetCmd  `cmd:"" help:"Set a knob."`
 	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
 	Info InfoCmd `cmd:"" help:"Show available knobs."`
+	Lint LintCmd `cmd:"" help:"Check that the manifests follow the knot8 rules."`
 }
 
 type CommonFlags struct {
@@ -86,15 +88,15 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := checkKnobs(knobs); err != nil {
+		return nil, err
+	}
 
 	var res []Setter
 	for _, n := range knobNames(knobs) {
 		values, err := getKnob(knobs, n)
 		if err != nil {
 			return nil, err
-		}
-		if !allSame(values) {
-			return nil, fmt.Errorf("values pointed by field %q are not unique", n)
 		}
 		res = append(res, Setter{n, values[0].value})
 	}
@@ -108,7 +110,7 @@ type GetCmd struct {
 
 func (s *GetCmd) Run(ctx *Context) error {
 	knobs, _, err := openKnobs(s.Paths)
-	if err != nil {
+	if err != nil && !isNotUniqueValueError(err) {
 		return err
 	}
 
@@ -116,6 +118,7 @@ func (s *GetCmd) Run(ctx *Context) error {
 	if err != nil {
 		return err
 	}
+
 	for _, v := range values {
 		s, err := renderKnobValue(v)
 		if err != nil {
@@ -154,7 +157,7 @@ type InfoCmd struct {
 
 func (s *InfoCmd) Run(ctx *Context) error {
 	knobs, _, err := openKnobs(s.Paths)
-	if err != nil {
+	if err != nil && !isNotUniqueValueError(err) {
 		return err
 	}
 
@@ -163,6 +166,49 @@ func (s *InfoCmd) Run(ctx *Context) error {
 		fmt.Printf("  %s\n", k)
 	}
 
+	return nil
+}
+
+type LintCmd struct {
+	CommonFlags
+}
+
+func (s *LintCmd) Run(ctx *Context) error {
+	knobs, _, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+
+	if err := checkKnobs(knobs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type errNotUniqueValue struct{ err error }
+
+func (e errNotUniqueValue) Error() string { return e.err.Error() }
+func (e errNotUniqueValue) Unwrap() error { return e.err }
+
+func isNotUniqueValueError(err error) bool {
+	var u errNotUniqueValue
+	return errors.As(err, &u)
+}
+
+func checkKnobs(knobs map[string]Knob) error {
+	var errs []error
+	for _, n := range knobNames(knobs) {
+		values, err := getKnob(knobs, n)
+		if err != nil {
+			errs = append(errs, err)
+		} else if !allSame(values) {
+			errs = append(errs, fmt.Errorf("values pointed by field %q are not unique", n))
+		}
+	}
+	if errs != nil {
+		return errNotUniqueValue{multierror.Join(errs)}
+	}
 	return nil
 }
 
@@ -201,6 +247,13 @@ func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err 
 	}
 
 	knobs, err = parseKnobs(manifests)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = checkKnobs(knobs)
+	// let the caller decide whether the validation error is fatal
+
 	return knobs, manifests.Commit, err
 }
 

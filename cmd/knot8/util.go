@@ -39,14 +39,33 @@ func mapLines(s string, f func(string) string) string {
 	return strings.Join(lines, "\n")
 }
 
+type sliceEq interface {
+	Len() int
+	Equals(i, j int) bool
+}
+
 // allSame returns true if all elements of a sequence of lenght l are the same.
 // The equality of the elements of the slice is evaluated via a caller supplied predicate,
 // p that must returns true the ith and the jth element are the same.
-func allSame(l int, p func(i, j int) bool) bool {
+func allSame(iface sliceEq) bool {
+	l := iface.Len()
 	for i := 1; i < l; i++ {
-		if !p(0, i) {
+		if !iface.Equals(0, i) {
 			return false
 		}
 	}
 	return true
 }
+
+type sliceEqS struct {
+	l int
+	p func(i, j int) bool
+}
+
+// sliceEqFunc implements a sliceEq interface using an explicit length and a callback.
+func sliceEqFunc(l int, p func(i, j int) bool) sliceEqS {
+	return sliceEqS{l, p}
+}
+
+func (s sliceEqS) Len() int             { return s.l }
+func (s sliceEqS) Equals(i, j int) bool { return s.p(i, j) }

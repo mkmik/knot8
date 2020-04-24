@@ -93,7 +93,7 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value }) {
+		if !allSame(values) {
 			return nil, fmt.Errorf("values pointed by field %q are not unique", n)
 		}
 		res = append(res, Setter{n, values[0].value})

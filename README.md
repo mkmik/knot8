@@ -117,3 +117,16 @@ The algorithm is a 3-way merge between:
 
 The common baseline can be provided explicitly, but usually you'll rely on the original file having
 a `knot8.io/base` annotation with a snapshot of the original values that will later become useful as a baseline.
+
+### Linting
+
+Producing a well-formed knot8 compliant manifest has some pitfalls. For example, a field can appear
+in multiple manifests, but it always needs to have the same value.
+
+This and other checks can be performed by:
+
+```
+$ knot8 lint -f testdata/bad1.yaml
+knot8: error: 1 errors occurred:
+              values pointed by field "foo" are not unique
+```

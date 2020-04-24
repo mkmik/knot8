@@ -58,10 +58,12 @@ $ diff -u testdata/m1.yaml /tmp/c1.yaml
 ### Take values from files
 
 ```sh
+$ cat values.yaml
+foo: hola
 $ knot8 set <testdata/m1.yaml --from values.yaml >/tmp/c1.yaml
 ```
 
-Where values.yaml file is a YAML manifest file of any kind containing knot8 annotated fields.
+Where values.yaml file can also be a YAML manifest file of any kind containing knot8 annotated fields.
 
 ### In-place edits
 
@@ -115,7 +117,7 @@ The algorithm is a 3-way merge between:
 2. the new upstream.
 3. the common baseline.
 
-The common baseline can be provided explicitly, but usually you'll rely on the original file having
+The common baseline can be provided explicitly, but usually you'll rely on your current file having
 a `knot8.io/base` annotation with a snapshot of the original values that will later become useful as a baseline.
 
 ### Linting

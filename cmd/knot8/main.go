@@ -22,6 +22,8 @@ var cli struct {
 	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
 	Info InfoCmd `cmd:"" help:"Show available knobs."`
 	Lint LintCmd `cmd:"" help:"Check that the manifests follow the knot8 rules."`
+
+	Version kong.VersionFlag `name:"version" help:"Print version information and quit"`
 }
 
 type CommonFlags struct {
@@ -319,6 +321,9 @@ func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err 
 func main() {
 	ctx := kong.Parse(&cli,
 		kong.UsageOnError(),
+		kong.Vars{
+			"version": "0.0.1",
+		},
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
 			Summary: true,

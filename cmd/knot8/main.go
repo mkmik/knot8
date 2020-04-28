@@ -71,7 +71,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 
 	var errs []error
 	for _, f := range values {
-		if err := setKnob(knobs, f.Field, f.Value); err != nil {
+		if err := knobs.Set(f.Field, f.Value); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -101,8 +101,8 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 	}
 
 	var res []Setter
-	for _, n := range knobNames(knobs) {
-		values, err := getKnob(knobs, n)
+	for _, n := range knobs.Names() {
+		values, err := knobs.GetAll(n)
 		if err != nil {
 			return nil, err
 		}
@@ -178,13 +178,13 @@ func (s *GetCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	values, err := getKnob(knobs, s.Field)
+	values, err := knobs.GetAll(s.Field)
 	if err != nil {
 		return err
 	}
 
 	for _, v := range values {
-		s, err := renderKnobValue(v)
+		s, err := renderKnobTarget(v)
 		if err != nil {
 			return err
 		}
@@ -193,10 +193,10 @@ func (s *GetCmd) Run(ctx *Context) error {
 	return nil
 }
 
-// renderKnobValue reads a knob value from the source stream and reformats it so it displays nicely
+// renderKnobTarget reads a knob value from the source stream and reformats it so it displays nicely
 // in the get command output. It preserves the value formatting from the source yaml but re-indents it
 // and drops the comment from the source.
-func renderKnobValue(k knobValue) (string, error) {
+func renderKnobTarget(k KnobTarget) (string, error) {
 	file := k.ptr.Manifest.source.file
 	filename := file.name
 	r := file.buf
@@ -239,7 +239,7 @@ func diff(knobs map[string]Knob) (map[string]string, error) {
 
 	dirty := map[string]string{}
 	for n, k := range knobs {
-		values, err := getKnobValue(k)
+		values, err := k.GetAll()
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +276,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 	for n, v := range d {
-		setKnob(knobsU, n, v)
+		knobsU.Set(n, v)
 	}
 
 	msC := allManifests(knobsC)
@@ -297,7 +297,7 @@ func (s *InfoCmd) Run(ctx *Context) error {
 	}
 
 	fmt.Println("Knobs:")
-	for _, k := range knobNames(knobs) {
+	for _, k := range knobs.Names() {
 		fmt.Printf("  %s\n", k)
 	}
 
@@ -331,13 +331,13 @@ func isNotUniqueValueError(err error) bool {
 	return errors.As(err, &u)
 }
 
-func checkKnobs(knobs map[string]Knob) error {
+func checkKnobs(knobs Knobs) error {
 	var errs []error
-	for _, n := range knobNames(knobs) {
-		values, err := getKnob(knobs, n)
+	for _, n := range knobs.Names() {
+		values, err := knobs.GetAll(n)
 		if err != nil {
 			errs = append(errs, err)
-		} else if !allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value }) {
+		} else if !checkKnobValues(values) {
 			errs = append(errs, fmt.Errorf("values pointed by field %q are not unique", n))
 		}
 	}
@@ -350,7 +350,7 @@ func checkKnobs(knobs map[string]Knob) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string) (knobs map[string]Knob, commit func() error, err error) {
+func openKnobs(paths []string) (knobs Knobs, commit func() error, err error) {
 	if len(paths) == 0 {
 		paths = []string{"-"}
 	}

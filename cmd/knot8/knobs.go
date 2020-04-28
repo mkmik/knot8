@@ -36,13 +36,15 @@ func (p Pointer) findNode() (*yaml.Node, error) {
 	return n, err
 }
 
-func parseKnobs(manifests []*Manifest) (map[string]Knob, error) {
-	res := map[string]Knob{}
+type Knobs map[string]Knob
+
+func parseKnobs(manifests []*Manifest) (Knobs, error) {
+	res := Knobs{}
 	var errs []error
 	for _, m := range manifests {
 		for k, v := range m.Metadata.Annotations {
 			if strings.HasPrefix(k, annoPrefix) {
-				if err := addKnob(res, m, strings.TrimPrefix(k, annoPrefix), v); err != nil {
+				if err := res.addKnob(m, strings.TrimPrefix(k, annoPrefix), v); err != nil {
 					errs = append(errs, err)
 				}
 			}
@@ -54,43 +56,59 @@ func parseKnobs(manifests []*Manifest) (map[string]Knob, error) {
 	return res, nil
 }
 
-func addKnob(r map[string]Knob, m *Manifest, n, e string) error {
-	k := r[n]
+func (ks Knobs) addKnob(m *Manifest, n, e string) error {
+	k := ks[n]
 	k.Name = n
 	k.Pointers = append(k.Pointers, Pointer{Expr: e, Manifest: m})
-	r[n] = k
+	ks[n] = k
 	return nil
 }
 
-func knobNames(knobs map[string]Knob) []string {
+// Names returns a sorted slice of knob names.
+func (ks Knobs) Names() []string {
 	var names []string
-	for k := range knobs {
-		names = append(names, k)
+	for n := range ks {
+		names = append(names, n)
 	}
 
 	sort.Strings(names)
 	return names
 }
 
-type knobValue struct {
+type KnobTarget struct {
 	value string
 	ptr   Pointer
 	line  int
 	loc   runeRange
 }
 
-func getKnob(knobs map[string]Knob, n string) ([]knobValue, error) {
-	k, ok := knobs[n]
+func checkKnobValues(values []KnobTarget) bool {
+	return allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value })
+}
+
+func (ks Knobs) GetAll(n string) ([]KnobTarget, error) {
+	k, ok := ks[n]
 	if !ok {
 		return nil, fmt.Errorf("knob %q not found", n)
 	}
-	return getKnobValue(k)
+	return k.GetAll()
 }
 
-func getKnobValue(k Knob) ([]knobValue, error) {
+func (ks Knobs) GetValue(n string) (string, error) {
+	values, err := ks.GetAll(n)
+	if err != nil {
+		return "", err
+	}
+	if !checkKnobValues(values) {
+		return "", fmt.Errorf("values pointed by field %q are not unique", n)
+	}
+	return values[0].value, nil
+}
+
+func (k Knob) GetAll() ([]KnobTarget, error) {
 	var (
 		errs []error
-		res  []knobValue
+		res  []KnobTarget
 	)
 	for _, p := range k.Pointers {
 		f, err := p.findNode()
@@ -99,7 +117,7 @@ func getKnobValue(k Knob) ([]knobValue, error) {
 			continue
 		}
 
-		res = append(res, knobValue{f.Value, p, f.Line, mkRuneRange(f)})
+		res = append(res, KnobTarget{f.Value, p, f.Line, mkRuneRange(f)})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)
@@ -107,8 +125,8 @@ func getKnobValue(k Knob) ([]knobValue, error) {
 	return res, nil
 }
 
-func setKnob(knobs map[string]Knob, n, v string) error {
-	k, ok := knobs[n]
+func (ks Knobs) Set(n, v string) error {
+	k, ok := ks[n]
 	if !ok {
 		return fmt.Errorf("knob %q not found", n)
 	}
@@ -140,7 +158,7 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 	return nil
 }
 
-func allManifests(knobs map[string]Knob) []*Manifest {
+func allManifests(knobs Knobs) []*Manifest {
 	var res []*Manifest
 	for _, k := range knobs {
 		for _, p := range k.Pointers {
@@ -150,7 +168,7 @@ func allManifests(knobs map[string]Knob) []*Manifest {
 	return res
 }
 
-func findOriginal(knobs map[string]Knob) (map[string]string, error) {
+func findOriginal(knobs Knobs) (map[string]string, error) {
 	ms := allManifests(knobs)
 	for _, m := range ms {
 		if o, ok := m.Metadata.Annotations[originalAnno]; ok {

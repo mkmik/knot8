@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/alecthomas/kong v0.2.7
 	github.com/go-openapi/jsonpointer v0.19.3
+	github.com/hashicorp/go-getter v1.4.1
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mkmik/multierror v0.3.0
 	golang.org/x/text v0.3.2

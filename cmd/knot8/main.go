@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
+	"github.com/hashicorp/go-getter"
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
 )
@@ -268,6 +269,18 @@ func (s *PullCmd) Run(ctx *Context) error {
 	}
 	d, err := diff(knobsC)
 	if err != nil {
+		return err
+	}
+
+	upstream, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+	opt := func(c *getter.Client) (err error) {
+		c.Pwd, err = os.Getwd()
+		return
+	}
+	if err := getter.GetFile(upstream.Name(), s.Upstream, opt); err != nil {
 		return err
 	}
 

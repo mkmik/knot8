@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -20,6 +21,7 @@ type Context struct {
 var cli struct {
 	Set  SetCmd  `cmd:"" help:"Set a knob."`
 	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
+	Diff DiffCmd `cmd:"" help:"Show the values different from the original."`
 	Info InfoCmd `cmd:"" help:"Show available knobs."`
 	Lint LintCmd `cmd:"" help:"Check that the manifests follow the knot8 rules."`
 
@@ -210,6 +212,41 @@ func renderKnobValue(k knobValue) (string, error) {
 	}
 
 	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
+}
+
+type DiffCmd struct {
+	CommonFlags
+}
+
+func (s *DiffCmd) Run(ctx *Context) error {
+	knobs, _, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+	d, err := diff(knobs)
+	if err != nil {
+		return err
+	}
+	return yaml.NewEncoder(os.Stdout).Encode(d)
+}
+
+func diff(knobs map[string]Knob) (map[string]string, error) {
+	o, err := findOriginal(knobs)
+	if err != nil {
+		return nil, err
+	}
+
+	dirty := map[string]string{}
+	for n, k := range knobs {
+		values, err := getKnobValue(k)
+		if err != nil {
+			return nil, err
+		}
+		if v := values[0].value; o[n] != v {
+			dirty[n] = v
+		}
+	}
+	return dirty, nil
 }
 
 type InfoCmd struct {

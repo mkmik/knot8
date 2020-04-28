@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	annoPrefix = "field.knot8.io/"
+	annoPrefix   = "field.knot8.io/"
+	originalAnno = "knot8.io/original"
 )
 
 type Knob struct {
@@ -83,7 +84,10 @@ func getKnob(knobs map[string]Knob, n string) ([]knobValue, error) {
 	if !ok {
 		return nil, fmt.Errorf("knob %q not found", n)
 	}
+	return getKnobValue(k)
+}
 
+func getKnobValue(k Knob) ([]knobValue, error) {
 	var (
 		errs []error
 		res  []knobValue
@@ -134,6 +138,30 @@ func setKnob(knobs map[string]Knob, n, v string) error {
 		return multierror.Join(errs)
 	}
 	return nil
+}
+
+func allManifests(knobs map[string]Knob) []*Manifest {
+	var res []*Manifest
+	for _, k := range knobs {
+		for _, p := range k.Pointers {
+			res = append(res, p.Manifest)
+		}
+	}
+	return res
+}
+
+func findOriginal(knobs map[string]Knob) (map[string]string, error) {
+	ms := allManifests(knobs)
+	for _, m := range ms {
+		if o, ok := m.Metadata.Annotations[originalAnno]; ok {
+			var res map[string]string
+			if err := yaml.Unmarshal([]byte(o), &res); err != nil {
+				return nil, err
+			}
+			return res, nil
+		}
+	}
+	return nil, fmt.Errorf("cannot find %s annotation", originalAnno)
 }
 
 func mkRuneRange(n *yaml.Node) runeRange {

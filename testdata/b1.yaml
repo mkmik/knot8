@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo2
+  annotations:
+    field.knot8.io/foo: /data/foo
+    field.knot8.io/bar: /data/bar
+    knot8.io/original: |
+      foo: meow
+      bar: "1"
+data:
+  foo: meow
+  bar: "1"

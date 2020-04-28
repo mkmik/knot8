@@ -118,7 +118,7 @@ The algorithm is a 3-way merge between:
 3. the common baseline.
 
 The common baseline can be provided explicitly, but usually you'll rely on your current file having
-a `knot8.io/base` annotation with a snapshot of the original values that will later become useful as a baseline.
+a `knot8.io/original` annotation with a snapshot of the original values that will later become useful as a baseline.
 
 ### Linting
 

@@ -22,6 +22,7 @@ var cli struct {
 	Set  SetCmd  `cmd:"" help:"Set a knob."`
 	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
 	Diff DiffCmd `cmd:"" help:"Show the values different from the original."`
+	Pull PullCmd `cmd:"" help:"Pull and merge a new version from upstream."`
 	Info InfoCmd `cmd:"" help:"Show available knobs."`
 	Lint LintCmd `cmd:"" help:"Check that the manifests follow the knot8 rules."`
 
@@ -247,6 +248,42 @@ func diff(knobs map[string]Knob) (map[string]string, error) {
 		}
 	}
 	return dirty, nil
+}
+
+type PullCmd struct {
+	CommonFlags
+	Upstream string `arg:"" help:"Upstream file/URL." type:"file"`
+}
+
+func (s *PullCmd) Run(ctx *Context) error {
+	// quick&dirty 3-way merge that deals with only one current and one upstream file
+	// (which can contain multiple manifests).
+	if len(s.Paths) > 1 {
+		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
+	}
+
+	knobsC, commit, err := openKnobs(s.Paths)
+	if err != nil {
+		return err
+	}
+	d, err := diff(knobsC)
+	if err != nil {
+		return err
+	}
+
+	knobsU, _, err := openKnobs([]string{s.Upstream})
+	if err != nil {
+		return err
+	}
+	for n, v := range d {
+		setKnob(knobsU, n, v)
+	}
+
+	msC := allManifests(knobsC)
+	msU := allManifests(knobsU)
+	msC[0].source.file.buf = msU[0].source.file.buf
+
+	return commit()
 }
 
 type InfoCmd struct {

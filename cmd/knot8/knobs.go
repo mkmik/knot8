@@ -131,7 +131,7 @@ func (ks Knobs) Set(n, v string) error {
 		return fmt.Errorf("knob %q not found", n)
 	}
 
-	updatesByFile := map[*shadowFile][]runeRange{}
+	updatesByFile := map[*shadowFile][]edit{}
 
 	var errs []error
 	for _, p := range k.Pointers {
@@ -141,14 +141,14 @@ func (ks Knobs) Set(n, v string) error {
 			continue
 		}
 		file := p.Manifest.source.file
-		updatesByFile[file] = append(updatesByFile[file], mkRuneRange(f))
+		updatesByFile[file] = append(updatesByFile[file], mkEdit(v, f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)
 	}
 
-	for f, positions := range updatesByFile {
-		if err := f.patch(v, positions); err != nil {
+	for f, edits := range updatesByFile {
+		if err := f.patch(edits); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}

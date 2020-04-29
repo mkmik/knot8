@@ -17,6 +17,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
+	"gopkg.in/yaml.v3"
 )
 
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
@@ -75,17 +76,24 @@ func (r runeRange) slice(src []rune) []rune {
 	return src[r.start:r.end]
 }
 
+type edit struct {
+	runeRange
+	value string
+}
+
+func mkEdit(value string, node *yaml.Node) edit {
+	return edit{mkRuneRange(node), value}
+}
+
 // patch edits a file in place by replacing each of the given rune ranges in the file
 // buf with a given string value.
-func (f *shadowFile) patch(value string, positions []runeRange) error {
-	backwards := make([]runeRange, len(positions))
-	copy(backwards, positions)
-	sort.Slice(backwards, func(i, j int) bool { return positions[i].start > positions[j].start })
+func (f *shadowFile) patch(edits []edit) error {
+	backwards := make([]edit, len(edits))
+	copy(backwards, edits)
+	sort.Slice(backwards, func(i, j int) bool { return backwards[i].start > backwards[j].start })
 
-	rvalue := bytes.Runes([]byte(value))
-
-	for _, pos := range backwards {
-		f.buf = append(f.buf[:pos.start], append(rvalue, f.buf[pos.end:]...)...)
+	for _, e := range backwards {
+		f.buf = append(f.buf[:e.start], append(bytes.Runes([]byte(e.value)), f.buf[e.end:]...)...)
 	}
 	return nil
 }

@@ -284,7 +284,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	knobsU, _, err := openKnobs([]string{s.Upstream})
+	knobsU, _, err := openKnobs([]string{upstream.Name()})
 	if err != nil {
 		return err
 	}

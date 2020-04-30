@@ -45,12 +45,23 @@ func (s *Setter) UnmarshalText(in []byte) error {
 		return fmt.Errorf("bad -v format %q, missing '='", in)
 	}
 	s.Field, s.Value = c[0], c[1]
+
+	if strings.HasPrefix(s.Value, "@") {
+		b, err := ioutil.ReadFile(strings.TrimPrefix(s.Value, "@"))
+		if err != nil {
+			return err
+		}
+		s.Value = string(b)
+	} else if strings.HasPrefix(s.Value, `\@`) {
+		s.Value = strings.TrimPrefix(s.Value, `\`)
+	}
+
 	return nil
 }
 
 type SetCmd struct {
 	CommonFlags
-	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value"`
+	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value or field=@filename, where a leading @ can be escaped with a backslash."`
 	From   []string `name:"from" type:"file" help:"Read values from one or more files. The values will be read from not8 annotated k8s resources."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 }

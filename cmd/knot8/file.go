@@ -85,9 +85,9 @@ func mkEdit(value string, node *yaml.Node) edit {
 	return edit{mkRuneRange(node), value}
 }
 
-// patch edits a file in place by replacing each of the given rune ranges in the file
+// Edit edits a file in place by replacing each of the given rune ranges in the file
 // buf with a given string value.
-func (f *shadowFile) patch(edits []edit) error {
+func (f *shadowFile) Edit(edits []edit) error {
 	backwards := make([]edit, len(edits))
 	copy(backwards, edits)
 	sort.Slice(backwards, func(i, j int) bool { return backwards[i].start > backwards[j].start })

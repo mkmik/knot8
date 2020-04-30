@@ -172,7 +172,7 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if err := f.patch(edits); err != nil {
+		if err := f.Edit(edits); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}

@@ -136,4 +136,5 @@ knot8: error: 1 errors occurred:
 ## Example
 
 * Demo upstream repo: https://github.com/mkmik/kdemo
-* Example of how an end user would use it: https://github.com/mkmik/kdemo-user
+* Simple example of how an end user would use it: https://github.com/mkmik/kdemo-user
+* Some users prefer separate values.yaml files to apply on the fly, e.g. for different environments: https://github.com/mkmik/kdemo-values

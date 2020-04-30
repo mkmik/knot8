@@ -111,6 +111,11 @@ func yamlString(value string, indent int) (string, error) {
 	return s[:len(s)-1], nil // strip trailing newline emitted by yaml marshaling.
 }
 
+func yamlStringSingleQuoted(value string) string {
+	// TODO
+	return value
+}
+
 // A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.
 type RuneBuffer []rune
 

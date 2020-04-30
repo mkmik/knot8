@@ -5,7 +5,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -70,14 +69,6 @@ func (f *shadowFile) boundsCheck(start, end int) error {
 	if l := len(f.buf); start < 0 || start >= l || end < start || end >= l {
 		return fmt.Errorf("%d:%d out of bound (buf size %d)", start, end, l)
 	}
-	return nil
-}
-
-func (f *shadowFile) xSplice(value string, start, end int) error {
-	if err := f.boundsCheck(start, end); err != nil {
-		return err
-	}
-	f.buf = append(f.buf[:start], append(bytes.Runes([]byte(value)), f.buf[end:]...)...)
 	return nil
 }
 

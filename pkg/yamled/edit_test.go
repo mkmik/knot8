@@ -15,6 +15,16 @@ bar: xy
 baz: end
 `
 
+	src2 := `foo: "abc"
+bar: xy
+baz: end
+`
+
+	src3 := `foo: "12"
+bar: xy
+baz: end
+`
+
 	testCases := []struct {
 		src  string
 		foo  string
@@ -26,6 +36,17 @@ baz: end
 	}{
 		{
 			src: src1,
+			foo: "AB",
+			bar: "xyz",
+		},
+		{
+			src:      src2,
+			foo:      "AB",
+			fooStyle: yaml.DoubleQuotedStyle,
+			bar:      "xyz",
+		},
+		{
+			src: src3,
 			foo: "AB",
 			bar: "xyz",
 		},

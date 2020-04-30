@@ -5,7 +5,9 @@ package yamled
 
 import (
 	"bytes"
+	"encoding/json"
 	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -51,17 +53,62 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 	return nil
 }
 
-// quote quotes a yaml string.
-// TODO: try to preserve previous quoting style and indentation level
+// quote quotes a string into a yaml string.
+// It tries to preserve original quotation style, when it's likely to be intentional.
+// In particular, if the original value had to be quoted (e.g. a number) and the new value
+// doesn't have to be quoted, then the quotes will be dropped. OTOH, if the original value
+// didn't have to be quoted in the first place, we'll make sure the new value is also quoted,
+// just to avoid frustrating the user who intentionally quoted a string that didn't have to be quoted.
+// If the user didn't intentionally quote the string, we're not making the original file style any
+// worse than it already was.
+//
+// TODO: handle single quotes and preserve input indentation level
 func quote(value, old string) (string, error) {
-	if value == "" {
-		return "", nil
-	}
-	b, err := yaml.Marshal(value)
+	indent := 2 // TODO: detect
+	res, err := yamlString(value, indent)
 	if err != nil {
 		return "", err
 	}
-	return string(b)[:len(b)-1], nil
+
+	if strings.HasPrefix(old, `"`) {
+		reEncoded, err := yamlRoundTrip(old, indent)
+		if err != nil {
+			return "", err
+		}
+		if !strings.HasPrefix(reEncoded, `"`) {
+			b, err := json.Marshal(res)
+			if err != nil {
+				return "", err
+			}
+			res = string(b)
+		}
+	}
+
+	return res, nil
+}
+
+// yamlRoundTrip decodes and a string from YAML and reencodes it into YAML.
+func yamlRoundTrip(str string, indent int) (string, error) {
+	var parsed string
+	if err := yaml.Unmarshal([]byte(str), &parsed); err != nil {
+		return "", err
+	}
+	return yamlString(parsed, indent)
+}
+
+// yamlString returns a string quoted with yaml rules.
+func yamlString(value string, indent int) (string, error) {
+	if value == "" {
+		return "", nil
+	}
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(indent)
+	if err := enc.Encode(value); err != nil {
+		return "", err
+	}
+	s := buf.String()
+	return s[:len(s)-1], nil // strip trailing newline emitted by yaml marshaling.
 }
 
 // A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.

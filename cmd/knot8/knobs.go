@@ -80,7 +80,7 @@ type KnobTarget struct {
 	value string
 	ptr   Pointer
 	line  int
-	loc   yamled.RuneRange
+	loc   yamled.Extent
 }
 
 func checkKnobValues(values []KnobTarget) bool {
@@ -118,7 +118,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 			continue
 		}
 
-		res = append(res, KnobTarget{f.Value, p, f.Line, yamled.NewRuneRange(f)})
+		res = append(res, KnobTarget{f.Value, p, f.Line, yamled.NewExtent(f)})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)

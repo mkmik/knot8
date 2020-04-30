@@ -17,30 +17,30 @@ type RuneSplicer interface {
 
 // An Edit structure captures a request to splice Value into a given rune range of a buffer.
 type Edit struct {
-	RuneRange
+	Extent
 	Value string
 }
 
 // NewEdit constructs a new Edit structure from a value and a yaml.Node.
 func NewEdit(value string, node *yaml.Node) Edit {
-	return Edit{NewRuneRange(node), value}
+	return Edit{NewExtent(node), value}
 }
 
-// RuneRange is a pair of start+end rune indices.
-type RuneRange struct {
+// Extent is a pair of start+end rune indices.
+type Extent struct {
 	Start int
 	End   int
 }
 
-// NewRuneRange returns a RuneRange that covers the extent of a given yaml.Node.
-func NewRuneRange(n *yaml.Node) RuneRange {
+// NewExtent returns a Extent that covers the extent of a given yaml.Node.
+func NewExtent(n *yaml.Node) Extent {
 	// IndexEnd incorrectly includes trailing newline when strings are multiline.
 	// TODO(mkm): remove hack once upstream is patched
 	d := 0
 	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
 		d = 1
 	}
-	return RuneRange{n.Index, n.IndexEnd - d}
+	return Extent{n.Index, n.IndexEnd - d}
 }
 
 // Splice edits a file in place by replacing each of the given rune ranges in the file

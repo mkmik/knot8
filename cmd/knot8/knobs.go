@@ -125,13 +125,31 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 	return res, nil
 }
 
-func (ks Knobs) Set(n, v string) error {
-	k, ok := ks[n]
+// An EditBatch holds requests to edit knobs, added via the Set method
+// and performed in the right order by the Commit method.
+type EditBatch struct {
+	ks    Knobs
+	edits map[*shadowFile][]edit
+
+	committed bool
+}
+
+func (ks Knobs) NewEditBatch() EditBatch {
+	return EditBatch{
+		ks:    ks,
+		edits: map[*shadowFile][]edit{},
+	}
+}
+
+func (b EditBatch) Set(n, v string) error {
+	if b.committed {
+		return fmt.Errorf("batch already committed")
+	}
+
+	k, ok := b.ks[n]
 	if !ok {
 		return fmt.Errorf("knob %q not found", n)
 	}
-
-	updatesByFile := map[*shadowFile][]edit{}
 
 	var errs []error
 	for _, p := range k.Pointers {
@@ -141,13 +159,19 @@ func (ks Knobs) Set(n, v string) error {
 			continue
 		}
 		file := p.Manifest.source.file
-		updatesByFile[file] = append(updatesByFile[file], mkEdit(v, f))
+		b.edits[file] = append(b.edits[file], mkEdit(v, f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)
 	}
 
-	for f, edits := range updatesByFile {
+	return nil
+}
+
+// Commit performs the edits in bulk.
+func (b EditBatch) Commit() error {
+	var errs []error
+	for f, edits := range b.edits {
 		if err := f.patch(edits); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
@@ -155,6 +179,7 @@ func (ks Knobs) Set(n, v string) error {
 	if errs != nil {
 		return multierror.Join(errs)
 	}
+	b.committed = true
 	return nil
 }
 

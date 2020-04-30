@@ -70,14 +70,18 @@ func (s *SetCmd) Run(ctx *Context) error {
 		values = append(fromValues, values...)
 	}
 
+	batch := knobs.NewEditBatch()
 	var errs []error
 	for _, f := range values {
-		if err := knobs.Set(f.Field, f.Value); err != nil {
+		if err := batch.Set(f.Field, f.Value); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	if errs != nil {
 		return multierror.Join(errs)
+	}
+	if err := batch.Commit(); err != nil {
+		return err
 	}
 
 	switch s.Format {
@@ -288,8 +292,12 @@ func (s *PullCmd) Run(ctx *Context) error {
 	if err != nil {
 		return err
 	}
+	batch := knobsU.NewEditBatch()
 	for n, v := range d {
-		knobsU.Set(n, v)
+		batch.Set(n, v)
+	}
+	if err := batch.Commit(); err != nil {
+		return err
 	}
 
 	msC := allManifests(knobsC)

@@ -10,113 +10,69 @@ import (
 )
 
 func TestSplice(t *testing.T) {
-	src1 := `foo: abc
-bar: xy
-baz: end
-`
-
-	src2 := `foo: "abc"
-bar: xy
-baz: end
-`
-
-	src3 := `foo: "12"
+	src := `foo: abc
 bar: xy
 baz: end
 `
 
 	testCases := []struct {
-		src  string
 		foo  string
 		bar  string
 		want string
-
-		fooStyle yaml.Style
-		barStyle yaml.Style
 	}{
 		{
-			src: src1,
 			foo: "AB",
 			bar: "xyz",
 		},
 		{
-			src:      src2,
-			foo:      "AB",
-			fooStyle: yaml.DoubleQuotedStyle,
-			bar:      "xyz",
-		},
-		{
-			src: src3,
-			foo: "AB",
-			bar: "xyz",
-		},
-		{
-			src: src1,
 			foo: "ABCD",
 			bar: "x",
 		},
 		{
-			src: src1,
 			foo: "ABCD",
 			bar: "",
 		},
 		{
-			src: src1,
 			foo: "",
 			bar: "x",
 		},
 		{
-			src: src1,
 			foo: "",
 			bar: "a#b",
 		},
 		{
-			src:      src1,
-			foo:      "",
-			bar:      "a #b",
-			barStyle: yaml.SingleQuotedStyle,
+			foo: "",
+			bar: "a #b",
 		},
 		{
-			src:      src1,
-			foo:      "",
-			bar:      " ",
-			barStyle: yaml.SingleQuotedStyle,
+			foo: "",
+			bar: " ",
 		},
 		{
-			src:      src1,
-			foo:      "a",
-			bar:      "2",
-			barStyle: yaml.DoubleQuotedStyle,
+			foo: "a",
+			bar: "2",
 		},
 		{
-			src:      src1,
-			foo:      "a\nb\n",
-			fooStyle: yaml.LiteralStyle,
-			bar:      "ab",
+			foo: "a\nb\n",
+			bar: "ab",
 		},
 		{
-			src:      src1,
-			foo:      "\na\nb\n",
-			fooStyle: yaml.LiteralStyle,
-			bar:      "ab",
+			foo: "\na\nb\n",
+			bar: "ab",
 		},
 		{
-			src:      src1,
-			foo:      "\na\nb\n\n\n",
-			fooStyle: yaml.LiteralStyle,
-			bar:      "ab",
+			foo: "\na\nb\n\n\n",
+			bar: "ab",
 		},
 		{
-			src:      src1,
-			foo:      "a",
-			bar:      "\n",
-			barStyle: yaml.LiteralStyle,
+			foo: "a",
+			bar: "\n",
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			buf := yamled.RuneBuffer(tc.src)
+			buf := yamled.RuneBuffer(src)
 			var n yaml.Node
 			if err := yaml.Unmarshal([]byte(string(buf)), &n); err != nil {
 				t.Fatal(err)
@@ -147,7 +103,7 @@ baz: end
 				t.Fatal(err)
 			}
 
-			check := func(path, want string, style yaml.Style) {
+			check := func(path, want string) {
 				f, err := yptr.Find(&ne, path)
 				if err != nil {
 					t.Fatal(err)
@@ -155,16 +111,13 @@ baz: end
 				if got := f.Value; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
-				if got, want := f.Style, style; got != want {
-					t.Errorf("got: %d, want: %d", got, want)
-				}
 
 				if tag := f.Tag; tag != "!!str" && tag != "!!null" {
 					t.Errorf("tag for %q must be either string or null, got %q", path, tag)
 				}
 			}
-			check("/foo", tc.foo, tc.fooStyle)
-			check("/bar", tc.bar, tc.barStyle)
+			check("/foo", tc.foo)
+			check("/bar", tc.bar)
 		})
 	}
 }

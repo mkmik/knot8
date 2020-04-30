@@ -20,6 +20,9 @@ baz: end
 		foo  string
 		bar  string
 		want string
+
+		fooStyle yaml.Style
+		barStyle yaml.Style
 	}{
 		{
 			src: src1,
@@ -46,28 +49,48 @@ baz: end
 			foo: "",
 			bar: "a#b",
 		},
-		/* TODO
 		{
-			src: src1,
-			foo: "",
-			bar: "a #b",
+			src:      src1,
+			foo:      "",
+			bar:      "a #b",
+			barStyle: yaml.SingleQuotedStyle,
 		},
 		{
-			src: src1,
-			foo: "",
-			bar: " ",
+			src:      src1,
+			foo:      "",
+			bar:      " ",
+			barStyle: yaml.SingleQuotedStyle,
 		},
 		{
-			src: src1,
-			foo: "",
-			bar: "\n",
+			src:      src1,
+			foo:      "a",
+			bar:      "2",
+			barStyle: yaml.DoubleQuotedStyle,
 		},
 		{
-			src: src1,
-			foo: "1",
-			bar: "2",
+			src:      src1,
+			foo:      "a\nb\n",
+			fooStyle: yaml.LiteralStyle,
+			bar:      "ab",
 		},
-		*/
+		{
+			src:      src1,
+			foo:      "\na\nb\n",
+			fooStyle: yaml.LiteralStyle,
+			bar:      "ab",
+		},
+		{
+			src:      src1,
+			foo:      "\na\nb\n\n\n",
+			fooStyle: yaml.LiteralStyle,
+			bar:      "ab",
+		},
+		{
+			src:      src1,
+			foo:      "a",
+			bar:      "\n",
+			barStyle: yaml.LiteralStyle,
+		},
 	}
 
 	for i, tc := range testCases {
@@ -96,12 +119,14 @@ baz: end
 				t.Fatal(err)
 			}
 
+			t.Logf("after:\n%s", string(buf))
+
 			var ne yaml.Node
 			if err := yaml.Unmarshal([]byte(string(buf)), &ne); err != nil {
 				t.Fatal(err)
 			}
 
-			check := func(path, want string) {
+			check := func(path, want string, style yaml.Style) {
 				f, err := yptr.Find(&ne, path)
 				if err != nil {
 					t.Fatal(err)
@@ -109,12 +134,16 @@ baz: end
 				if got := f.Value; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
+				if got, want := f.Style, style; got != want {
+					t.Errorf("got: %d, want: %d", got, want)
+				}
+
 				if tag := f.Tag; tag != "!!str" && tag != "!!null" {
 					t.Errorf("tag for %q must be either string or null, got %q", path, tag)
 				}
 			}
-			check("/foo", tc.foo)
-			check("/bar", tc.bar)
+			check("/foo", tc.foo, tc.fooStyle)
+			check("/bar", tc.bar, tc.barStyle)
 		})
 	}
 }

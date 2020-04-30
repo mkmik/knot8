@@ -34,11 +34,28 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 	sort.Slice(backwards, func(i, j int) bool { return backwards[i].ext.Start > backwards[j].ext.Start })
 
 	for _, e := range backwards {
-		if err := buf.Splice(e.value, e.ext.Start, e.ext.End); err != nil {
+		q, err := quote(e.value)
+		if err != nil {
+			return err
+		}
+		if err := buf.Splice(q, e.ext.Start, e.ext.End); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// quote quotes a yaml string.
+// TODO: try to preserve previous quoting style and indentation level
+func quote(value string) (string, error) {
+	if value == "" {
+		return "", nil
+	}
+	b, err := yaml.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	return string(b)[:len(b)-1], nil
 }
 
 // A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.

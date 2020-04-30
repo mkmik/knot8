@@ -205,7 +205,7 @@ func renderKnobTarget(k KnobTarget) (string, error) {
 	file := k.ptr.Manifest.source.file
 	filename := file.name
 
-	v, err := file.Slice(k.loc.Start, k.loc.End)
+	v, err := file.buf.Slice(k.loc.Start, k.loc.End)
 	if err != nil {
 		return "", err
 	}

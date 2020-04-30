@@ -65,20 +65,6 @@ func (s *shadowFile) Commit() error {
 	return err
 }
 
-func (f *shadowFile) boundsCheck(start, end int) error {
-	if l := len(f.buf); start < 0 || start >= l || end < start || end >= l {
-		return fmt.Errorf("%d:%d out of bound (buf size %d)", start, end, l)
-	}
-	return nil
-}
-
-func (f *shadowFile) Slice(start, end int) (string, error) {
-	if err := f.boundsCheck(start, end); err != nil {
-		return "", err
-	}
-	return string(f.buf[start:end]), nil
-}
-
 // expandPaths will expand all path entries and return a slice of file paths.
 // If an input path points to a directory it will return all *.yaml files contained in it.
 // Shell globs are resolved.

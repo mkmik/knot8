@@ -14,6 +14,8 @@ import (
 type RuneSplicer interface {
 	// Splice replaces the contents from rune positions start to end with the given string value.
 	Splice(value string, start, end int) error
+	// Slice retrieves the existing contents from rune positions start to end.
+	Slice(start, end int) (string, error)
 }
 
 // An Edit structure captures a request to splice Value into a given extent of a buffer.
@@ -34,7 +36,11 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 	sort.Slice(backwards, func(i, j int) bool { return backwards[i].ext.Start > backwards[j].ext.Start })
 
 	for _, e := range backwards {
-		q, err := quote(e.value)
+		o, err := buf.Slice(e.ext.Start, e.ext.End)
+		if err != nil {
+			return err
+		}
+		q, err := quote(e.value, o)
 		if err != nil {
 			return err
 		}
@@ -47,7 +53,7 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 
 // quote quotes a yaml string.
 // TODO: try to preserve previous quoting style and indentation level
-func quote(value string) (string, error) {
+func quote(value, old string) (string, error) {
 	if value == "" {
 		return "", nil
 	}
@@ -64,6 +70,10 @@ type RuneBuffer []rune
 func (buf *RuneBuffer) Splice(value string, start, end int) error {
 	*buf = append((*buf)[:start], append(bytes.Runes([]byte(value)), (*buf)[end:]...)...)
 	return nil
+}
+
+func (buf *RuneBuffer) Slice(start, end int) (string, error) {
+	return string((*buf)[start:end]), nil
 }
 
 // Extent is a pair of start+end rune indices.

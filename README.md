@@ -1,8 +1,8 @@
 # knot8
 
-Define and manipulate "knobs" in K8s manifests.
+Define and manipulate "tunable fields" in K8s manifests.
 
-## Example
+## Quick guide
 
 Imagine some YAML manifest you download from upstream looks like:
 
@@ -132,3 +132,8 @@ $ knot8 lint -f testdata/bad1.yaml
 knot8: error: 1 errors occurred:
               values pointed by field "foo" are not unique
 ```
+
+## Example
+
+* Demo upstream repo: https://github.com/mkmik/kdemo
+* Example of how an end user would use it: https://github.com/mkmik/kdemo-user

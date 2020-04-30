@@ -65,10 +65,6 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 // TODO: handle single quotes and preserve input indentation level
 func quote(value, old string) (string, error) {
 	indent := 2 // TODO: detect
-	res, err := yamlString(value, indent)
-	if err != nil {
-		return "", err
-	}
 
 	if strings.HasPrefix(old, `"`) {
 		reEncoded, err := yamlRoundTrip(old, indent)
@@ -76,15 +72,15 @@ func quote(value, old string) (string, error) {
 			return "", err
 		}
 		if !strings.HasPrefix(reEncoded, `"`) {
-			b, err := json.Marshal(res)
+			b, err := json.Marshal(value)
 			if err != nil {
 				return "", err
 			}
-			res = string(b)
+			return string(b), nil
 		}
 	}
 
-	return res, nil
+	return yamlString(value, indent)
 }
 
 // yamlRoundTrip decodes and a string from YAML and reencodes it into YAML.

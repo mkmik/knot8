@@ -18,8 +18,8 @@ type RuneSplicer interface {
 
 // An Edit structure captures a request to splice Value into a given rune range of a buffer.
 type Edit struct {
-	Extent
-	Value string
+	ext   Extent
+	value string
 }
 
 // NewEdit constructs a new Edit structure from a value and a yaml.Node.
@@ -49,10 +49,10 @@ func NewExtent(n *yaml.Node) Extent {
 func Splice(buf RuneSplicer, edits []Edit) error {
 	backwards := make([]Edit, len(edits))
 	copy(backwards, edits)
-	sort.Slice(backwards, func(i, j int) bool { return backwards[i].Start > backwards[j].Start })
+	sort.Slice(backwards, func(i, j int) bool { return backwards[i].ext.Start > backwards[j].ext.Start })
 
 	for _, e := range backwards {
-		if err := buf.Splice(e.Value, e.Start, e.End); err != nil {
+		if err := buf.Splice(e.value, e.ext.Start, e.ext.End); err != nil {
 			return err
 		}
 	}

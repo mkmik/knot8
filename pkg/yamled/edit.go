@@ -6,8 +6,10 @@ package yamled
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 )
@@ -62,25 +64,36 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 // If the user didn't intentionally quote the string, we're not making the original file style any
 // worse than it already was.
 //
-// TODO: handle single quotes and preserve input indentation level
+// TODO: preserve input indentation level
 func quote(value, old string) (string, error) {
 	indent := 2 // TODO: detect
 
-	if strings.HasPrefix(old, `"`) {
-		reEncoded, err := yamlRoundTrip(old, indent)
-		if err != nil {
-			return "", err
-		}
-		if !strings.HasPrefix(reEncoded, `"`) {
-			b, err := json.Marshal(value)
+	if len(old) > 0 {
+		q := old[0]
+		if q == '"' || q == '\'' {
+			reEncoded, err := yamlRoundTrip(old, indent)
 			if err != nil {
 				return "", err
 			}
-			return string(b), nil
+			if reEncoded[0] != q {
+				if q == '"' {
+					return jsonMarshalString(value)
+				} else {
+					return yamlStringTrySingleQuoted(value, indent)
+				}
+			}
 		}
 	}
 
 	return yamlString(value, indent)
+}
+
+func jsonMarshalString(value interface{}) (string, error) {
+	b, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 // yamlRoundTrip decodes and a string from YAML and reencodes it into YAML.
@@ -107,9 +120,23 @@ func yamlString(value string, indent int) (string, error) {
 	return s[:len(s)-1], nil // strip trailing newline emitted by yaml marshaling.
 }
 
-func yamlStringSingleQuoted(value string) string {
-	// TODO
-	return value
+func isPrintable(s string) bool {
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// yamlStringTrySingleQuoted will return a single quoted YAML string, unless
+// it's impossible to encode it as such (e.g. because it contains non-printable chars),
+// in that case it will return whatever encoding yamlString picks.
+func yamlStringTrySingleQuoted(s string, indent int) (string, error) {
+	if !isPrintable(s) {
+		return yamlString(s, indent)
+	}
+	return fmt.Sprintf("'%s'", strings.ReplaceAll(s, "'", "''")), nil
 }
 
 // A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.

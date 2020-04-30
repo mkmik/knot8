@@ -51,7 +51,9 @@ func TestQuote(t *testing.T) {
 		{"1.0.0", `"b"`, `"1.0.0"`},
 		{"1.0.0", `"1"`, `1.0.0`},
 
-		//		{"a", `'b'`, `'a'`}, // TODO
+		{"a", "'b'", "'a'"},
+		{"a", "'#a'", "a"},
+		{"a\nb", "'b'", "|-\n  a\n  b"},
 	}
 
 	for i, tc := range testCases {
@@ -72,12 +74,18 @@ func TestSingleQuoted(t *testing.T) {
 		src  string
 		want string
 	}{
-		//		{"a", "'a'"},
+		{"a", "'a'"},
+		{`a\nb`, `'a\nb'`},
+		{"a\nb", "|-\n  a\n  b"},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			if got, want := yamlStringSingleQuoted(tc.src), tc.want; got != want {
+			got, err := yamlStringTrySingleQuoted(tc.src, 2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := tc.want; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

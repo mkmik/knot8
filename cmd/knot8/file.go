@@ -16,12 +16,13 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
+	"knot8.io/pkg/yamled"
 )
 
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
 type shadowFile struct {
 	name string
-	buf  []rune
+	buf  yamled.RuneBuffer
 }
 
 func newShadowFile(filename string) (*shadowFile, error) {
@@ -72,7 +73,7 @@ func (f *shadowFile) boundsCheck(start, end int) error {
 	return nil
 }
 
-func (f *shadowFile) Splice(value string, start, end int) error {
+func (f *shadowFile) xSplice(value string, start, end int) error {
 	if err := f.boundsCheck(start, end); err != nil {
 		return err
 	}

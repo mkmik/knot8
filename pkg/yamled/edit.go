@@ -4,6 +4,8 @@
 package yamled
 
 import (
+	"bytes"
+	"fmt"
 	"sort"
 
 	"gopkg.in/yaml.v3"
@@ -55,5 +57,23 @@ func Splice(buf RuneSplicer, edits []Edit) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.
+type RuneBuffer []rune
+
+func (buf RuneBuffer) boundsCheck(start, end int) error {
+	if l := len(buf); start < 0 || start >= l || end < start || end >= l {
+		return fmt.Errorf("%d:%d out of bound (buf size %d)", start, end, l)
+	}
+	return nil
+}
+
+func (buf *RuneBuffer) Splice(value string, start, end int) error {
+	if err := buf.boundsCheck(start, end); err != nil {
+		return err
+	}
+	*buf = append((*buf)[:start], append(bytes.Runes([]byte(value)), (*buf)[end:]...)...)
 	return nil
 }

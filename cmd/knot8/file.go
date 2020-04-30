@@ -10,14 +10,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
-	"gopkg.in/yaml.v3"
 )
 
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
@@ -67,35 +65,26 @@ func (s *shadowFile) Commit() error {
 	return err
 }
 
-type runeRange struct {
-	start int
-	end   int
-}
-
-func (r runeRange) slice(src []rune) []rune {
-	return src[r.start:r.end]
-}
-
-type edit struct {
-	runeRange
-	value string
-}
-
-func mkEdit(value string, node *yaml.Node) edit {
-	return edit{mkRuneRange(node), value}
-}
-
-// Edit edits a file in place by replacing each of the given rune ranges in the file
-// buf with a given string value.
-func (f *shadowFile) Edit(edits []edit) error {
-	backwards := make([]edit, len(edits))
-	copy(backwards, edits)
-	sort.Slice(backwards, func(i, j int) bool { return backwards[i].start > backwards[j].start })
-
-	for _, e := range backwards {
-		f.buf = append(f.buf[:e.start], append(bytes.Runes([]byte(e.value)), f.buf[e.end:]...)...)
+func (f *shadowFile) boundsCheck(start, end int) error {
+	if l := len(f.buf); start < 0 || start >= l || end < start || end >= l {
+		return fmt.Errorf("%d:%d out of bound (buf size %d)", start, end, l)
 	}
 	return nil
+}
+
+func (f *shadowFile) Splice(value string, start, end int) error {
+	if err := f.boundsCheck(start, end); err != nil {
+		return err
+	}
+	f.buf = append(f.buf[:start], append(bytes.Runes([]byte(value)), f.buf[end:]...)...)
+	return nil
+}
+
+func (f *shadowFile) Slice(start, end int) (string, error) {
+	if err := f.boundsCheck(start, end); err != nil {
+		return "", err
+	}
+	return string(f.buf[start:end]), nil
 }
 
 // expandPaths will expand all path entries and return a slice of file paths.

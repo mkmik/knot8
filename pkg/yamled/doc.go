@@ -5,5 +5,3 @@
 Package yamled implements in-place editing of YAML sources.
 */
 package yamled
-
-// TODO: move bits from cmd/knot/*.go

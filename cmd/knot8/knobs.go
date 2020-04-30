@@ -10,6 +10,7 @@ import (
 
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
+	"knot8.io/pkg/yamled"
 	"knot8.io/pkg/yptr"
 )
 
@@ -79,7 +80,7 @@ type KnobTarget struct {
 	value string
 	ptr   Pointer
 	line  int
-	loc   runeRange
+	loc   yamled.RuneRange
 }
 
 func checkKnobValues(values []KnobTarget) bool {
@@ -117,7 +118,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 			continue
 		}
 
-		res = append(res, KnobTarget{f.Value, p, f.Line, mkRuneRange(f)})
+		res = append(res, KnobTarget{f.Value, p, f.Line, yamled.NewRuneRange(f)})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)
@@ -129,7 +130,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 // and performed in the right order by the Commit method.
 type EditBatch struct {
 	ks    Knobs
-	edits map[*shadowFile][]edit
+	edits map[*shadowFile][]yamled.Edit
 
 	committed bool
 }
@@ -137,7 +138,7 @@ type EditBatch struct {
 func (ks Knobs) NewEditBatch() EditBatch {
 	return EditBatch{
 		ks:    ks,
-		edits: map[*shadowFile][]edit{},
+		edits: map[*shadowFile][]yamled.Edit{},
 	}
 }
 
@@ -159,7 +160,7 @@ func (b EditBatch) Set(n, v string) error {
 			continue
 		}
 		file := p.Manifest.source.file
-		b.edits[file] = append(b.edits[file], mkEdit(v, f))
+		b.edits[file] = append(b.edits[file], yamled.NewEdit(v, f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)
@@ -172,7 +173,7 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if err := f.Edit(edits); err != nil {
+		if err := yamled.Splice(f, edits); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}
@@ -205,14 +206,4 @@ func findOriginal(knobs Knobs) (map[string]string, error) {
 		}
 	}
 	return nil, fmt.Errorf("cannot find %s annotation", originalAnno)
-}
-
-func mkRuneRange(n *yaml.Node) runeRange {
-	// IndexEnd incorrectly includes trailing newline when strings are multiline.
-	// TODO(mkm): remove hack once upstream is patched
-	d := 0
-	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
-		d = 1
-	}
-	return runeRange{n.Index, n.IndexEnd - d}
 }

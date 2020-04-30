@@ -204,9 +204,11 @@ func (s *GetCmd) Run(ctx *Context) error {
 func renderKnobTarget(k KnobTarget) (string, error) {
 	file := k.ptr.Manifest.source.file
 	filename := file.name
-	r := file.buf
 
-	v := string(k.loc.slice(r))
+	v, err := file.Slice(k.loc.Start, k.loc.End)
+	if err != nil {
+		return "", err
+	}
 	c := strings.SplitN(v, "\n", 2)
 	if len(c) == 2 {
 		style, body := c[0], c[1]

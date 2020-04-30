@@ -16,7 +16,7 @@ type RuneSplicer interface {
 	Splice(value string, start, end int) error
 }
 
-// An Edit structure captures a request to splice Value into a given rune range of a buffer.
+// An Edit structure captures a request to splice Value into a given extent of a buffer.
 type Edit struct {
 	ext   Extent
 	value string
@@ -27,25 +27,7 @@ func NewEdit(value string, node *yaml.Node) Edit {
 	return Edit{NewExtent(node), value}
 }
 
-// Extent is a pair of start+end rune indices.
-type Extent struct {
-	Start int
-	End   int
-}
-
-// NewExtent returns a Extent that covers the extent of a given yaml.Node.
-func NewExtent(n *yaml.Node) Extent {
-	// IndexEnd incorrectly includes trailing newline when strings are multiline.
-	// TODO(mkm): remove hack once upstream is patched
-	d := 0
-	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
-		d = 1
-	}
-	return Extent{n.Index, n.IndexEnd - d}
-}
-
-// Splice edits a file in place by replacing each of the given rune ranges in the file
-// buf with a given string value.
+// Splice edits a file in place by performing a set of edits.
 func Splice(buf RuneSplicer, edits []Edit) error {
 	backwards := make([]Edit, len(edits))
 	copy(backwards, edits)
@@ -65,4 +47,21 @@ type RuneBuffer []rune
 func (buf *RuneBuffer) Splice(value string, start, end int) error {
 	*buf = append((*buf)[:start], append(bytes.Runes([]byte(value)), (*buf)[end:]...)...)
 	return nil
+}
+
+// Extent is a pair of start+end rune indices.
+type Extent struct {
+	Start int
+	End   int
+}
+
+// NewExtent returns a Extent that covers the extent of a given yaml.Node.
+func NewExtent(n *yaml.Node) Extent {
+	// IndexEnd incorrectly includes trailing newline when strings are multiline.
+	// TODO(mkm): remove hack once upstream is patched
+	d := 0
+	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
+		d = 1
+	}
+	return Extent{n.Index, n.IndexEnd - d}
 }

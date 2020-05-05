@@ -1,12 +1,14 @@
 package yamled_test
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
-	"knot8.io/pkg/yptr/yamled"
 	"knot8.io/pkg/yptr"
+	"knot8.io/pkg/yptr/yamled"
 )
 
 func TestSplice(t *testing.T) {
@@ -92,11 +94,22 @@ baz: end
 				yamled.NewEdit(tc.foo, foo),
 				yamled.NewEdit(tc.bar, bar),
 			}
+
+			var tmp bytes.Buffer
+			if err := yamled.Transform(&tmp, strings.NewReader(src), edits); err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("mutate:\n%s", tmp.String())
+
 			if err := yamled.Splice(&buf, edits); err != nil {
 				t.Fatal(err)
 			}
 
 			t.Logf("after:\n%s", string(buf))
+
+			if got, want := tmp.String(), string(buf); got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
 
 			var ne yaml.Node
 			if err := yaml.Unmarshal([]byte(string(buf)), &ne); err != nil {

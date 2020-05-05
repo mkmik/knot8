@@ -4,13 +4,16 @@
 package yamled
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"unicode"
 
+	"github.com/mkmik/argsort"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,6 +34,53 @@ type Edit struct {
 // NewEdit constructs a new Edit structure from a value and a yaml.Node.
 func NewEdit(value string, node *yaml.Node) Edit {
 	return Edit{NewExtent(node), value}
+}
+
+// Transform implements a streaming transform by applying the non-overlapping edits.
+func Transform(w io.Writer, r io.Reader, edits []Edit) error {
+	edmap := argsort.SortSlice(edits, func(i, j int) bool { return edits[i].ext.Start < edits[j].ext.Start })
+
+	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
+	defer wbuf.Flush()
+
+	for i, e := 0, 0; e < len(edits); i++ {
+		ch, _, err := rbuf.ReadRune()
+		if err != nil {
+			return err
+		}
+
+		ed := edits[edmap[e]]
+		if ed.ext.Start == i {
+			l := ed.ext.End - ed.ext.Start - 1
+			var old []rune
+			for j := 0; j < l; j++ {
+				och, _, err := rbuf.ReadRune()
+				if err != nil {
+					return err
+				}
+				old = append(old, och)
+			}
+			i += l
+			e++
+
+			q, err := quote(ed.value, string(old))
+			if err != nil {
+				return err
+			}
+
+			if _, err := wbuf.WriteString(q); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		if _, err := wbuf.WriteRune(ch); err != nil {
+			return err
+		}
+	}
+	_, err := io.Copy(wbuf, rbuf)
+	return err
 }
 
 // Splice edits a file in place by performing a set of edits.

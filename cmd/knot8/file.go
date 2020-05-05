@@ -15,7 +15,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
-	"knot8.io/pkg/yamled"
+	"knot8.io/pkg/yptr/yamled"
 )
 
 // A shadowFile is in-memory copy of a file that can be commited back to disk.

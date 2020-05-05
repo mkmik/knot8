@@ -9,21 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sort"
 	"strings"
 	"unicode"
 
 	"github.com/mkmik/argsort"
 	"gopkg.in/yaml.v3"
 )
-
-// RuneSplicer implementations allow in-place editing of buffers by using rune positions ranges
-type RuneSplicer interface {
-	// Splice replaces the contents from rune positions start to end with the given string value.
-	Splice(value string, start, end int) error
-	// Slice retrieves the existing contents from rune positions start to end.
-	Slice(start, end int) (string, error)
-}
 
 // An Edit structure captures a request to splice Value into a given extent of a buffer.
 type Edit struct {
@@ -81,28 +72,6 @@ func Transform(w io.Writer, r io.Reader, edits []Edit) error {
 	}
 	_, err := io.Copy(wbuf, rbuf)
 	return err
-}
-
-// Splice edits a file in place by performing a set of edits.
-func Splice(buf RuneSplicer, edits []Edit) error {
-	backwards := make([]Edit, len(edits))
-	copy(backwards, edits)
-	sort.Slice(backwards, func(i, j int) bool { return backwards[i].ext.Start > backwards[j].ext.Start })
-
-	for _, e := range backwards {
-		o, err := buf.Slice(e.ext.Start, e.ext.End)
-		if err != nil {
-			return err
-		}
-		q, err := quote(e.value, o)
-		if err != nil {
-			return err
-		}
-		if err := buf.Splice(q, e.ext.Start, e.ext.End); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // quote quotes a string into a yaml string.
@@ -187,18 +156,6 @@ func yamlStringTrySingleQuoted(s string, indent int) (string, error) {
 		return yamlString(s, indent)
 	}
 	return fmt.Sprintf("'%s'", strings.ReplaceAll(s, "'", "''")), nil
-}
-
-// A RuneBuffer is a trivial implementation of a RuneSplicer that uses a rune slice.
-type RuneBuffer []rune
-
-func (buf *RuneBuffer) Splice(value string, start, end int) error {
-	*buf = append((*buf)[:start], append(bytes.Runes([]byte(value)), (*buf)[end:]...)...)
-	return nil
-}
-
-func (buf *RuneBuffer) Slice(start, end int) (string, error) {
-	return string((*buf)[start:end]), nil
 }
 
 // Extent is a pair of start+end rune indices.

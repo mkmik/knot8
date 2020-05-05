@@ -74,9 +74,9 @@ baz: end
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			buf := yamled.RuneBuffer(src)
+			buf := bytes.NewBuffer([]byte(src))
 			var n yaml.Node
-			if err := yaml.Unmarshal([]byte(string(buf)), &n); err != nil {
+			if err := yaml.Unmarshal(buf.Bytes(), &n); err != nil {
 				t.Fatal(err)
 			}
 
@@ -99,20 +99,12 @@ baz: end
 			if err := yamled.Transform(&tmp, strings.NewReader(src), edits); err != nil {
 				t.Fatal(err)
 			}
-			t.Logf("mutate:\n%s", tmp.String())
+			t.Logf("after:\n%s", tmp.String())
 
-			if err := yamled.Splice(&buf, edits); err != nil {
-				t.Fatal(err)
-			}
-
-			t.Logf("after:\n%s", string(buf))
-
-			if got, want := tmp.String(), string(buf); got != want {
-				t.Errorf("got: %q, want: %q", got, want)
-			}
+			*buf = tmp
 
 			var ne yaml.Node
-			if err := yaml.Unmarshal([]byte(string(buf)), &ne); err != nil {
+			if err := yaml.Unmarshal(buf.Bytes(), &ne); err != nil {
 				t.Fatal(err)
 			}
 

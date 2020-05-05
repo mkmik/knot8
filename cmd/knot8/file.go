@@ -5,10 +5,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
@@ -21,7 +23,7 @@ import (
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
 type shadowFile struct {
 	name string
-	buf  yamled.RuneBuffer
+	buf  []rune
 }
 
 func newShadowFile(filename string) (*shadowFile, error) {
@@ -45,6 +47,21 @@ func newShadowFile(filename string) (*shadowFile, error) {
 		return nil, err
 	}
 	return &shadowFile{name: filename, buf: buf}, nil
+}
+
+func (f *shadowFile) edit(edits []yamled.Edit) error {
+	var nbuf bytes.Buffer
+	if err := yamled.Transform(&nbuf, strings.NewReader(string(f.buf)), edits); err != nil {
+		return err
+	}
+
+	rnew, err := readAllRunes(&nbuf)
+	if err != nil {
+		return err
+	}
+	f.buf = rnew
+
+	return nil
 }
 
 func (s *shadowFile) Commit() error {

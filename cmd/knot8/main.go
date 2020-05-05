@@ -216,10 +216,7 @@ func renderKnobTarget(k KnobTarget) (string, error) {
 	file := k.ptr.Manifest.source.file
 	filename := file.name
 
-	v, err := file.buf.Slice(k.loc.Start, k.loc.End)
-	if err != nil {
-		return "", err
-	}
+	v := string(file.buf[k.loc.Start:k.loc.End])
 	c := strings.SplitN(v, "\n", 2)
 	if len(c) == 2 {
 		style, body := c[0], c[1]

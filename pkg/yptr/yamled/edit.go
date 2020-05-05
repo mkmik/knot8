@@ -42,17 +42,14 @@ func Transform(w io.Writer, r io.Reader, edits []Edit) error {
 
 		ed := edits[edmap[e]]
 		if ed.ext.Start == i {
-			l := ed.ext.End - ed.ext.Start - 1
-			var old []rune
-			for j := 0; j < l; j++ {
-				och, _, err := rbuf.ReadRune()
-				if err != nil {
-					return err
-				}
-				old = append(old, och)
-			}
+			l := ed.ext.Len()
 			i += l
 			e++
+
+			old, err := readRunes(rbuf, l)
+			if err != nil {
+				return err
+			}
 
 			q, err := quote(ed.value, string(old))
 			if err != nil {
@@ -62,16 +59,26 @@ func Transform(w io.Writer, r io.Reader, edits []Edit) error {
 			if _, err := wbuf.WriteString(q); err != nil {
 				return err
 			}
-
-			continue
-		}
-
-		if _, err := wbuf.WriteRune(ch); err != nil {
-			return err
+		} else {
+			if _, err := wbuf.WriteRune(ch); err != nil {
+				return err
+			}
 		}
 	}
 	_, err := io.Copy(wbuf, rbuf)
 	return err
+}
+
+func readRunes(r io.RuneReader, n int) ([]rune, error) {
+	var res []rune
+	for i := 0; i < n; i++ {
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, ch)
+	}
+	return res, nil
 }
 
 // quote quotes a string into a yaml string.
@@ -173,4 +180,9 @@ func NewExtent(n *yaml.Node) Extent {
 		d = 1
 	}
 	return Extent{n.Index, n.IndexEnd - d}
+}
+
+// Len returns the number of runes in the extent.
+func (e Extent) Len() int {
+	return e.End - e.Start - 1
 }

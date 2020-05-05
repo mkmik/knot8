@@ -27,7 +27,8 @@ func NewEdit(value string, node *yaml.Node) Edit {
 	return Edit{NewExtent(node), value}
 }
 
-// Transform implements a streaming transform by applying the non-overlapping edits.
+// Transform copies copies text from r to w while replacing text at given rune extents,
+// as specified by the edits slice.
 func Transform(w io.Writer, r io.Reader, edits []Edit) error {
 	edmap := argsort.SortSlice(edits, func(i, j int) bool { return edits[i].ext.Start < edits[j].ext.Start })
 

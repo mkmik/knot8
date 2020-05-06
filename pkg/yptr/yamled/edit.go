@@ -9,10 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sort"
+	"io/ioutil"
 	"strings"
 	"unicode"
 
+	"github.com/mkmik/argsort"
 	"gopkg.in/yaml.v3"
 )
 
@@ -33,13 +34,13 @@ func Replace(w io.Writer, r io.Reader, reps []Replacement) error {
 	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
 	defer wbuf.Flush()
 
-	sreps := make([]Replacement, len(reps))
-	copy(sreps, reps)
-	sort.Slice(sreps, func(i, j int) bool { return reps[i].ext.Start < reps[j].ext.Start })
+	rmap := argsort.SortSlice(reps, func(i, j int) bool { return reps[i].ext.Start < reps[j].ext.Start })
 
 	pos := 0
 	var prev bytes.Buffer
-	for _, rep := range sreps {
+	for _, ri := range rmap {
+		rep := reps[ri]
+
 		// Copy out the span until the start of the current extent.
 		if err := copyRunesN(wbuf, rbuf, rep.ext.Start-pos); err != nil {
 			return err
@@ -68,6 +69,45 @@ func Replace(w io.Writer, r io.Reader, reps []Replacement) error {
 	// Copy out the trailing span.
 	_, err := io.Copy(wbuf, rbuf)
 	return err
+}
+
+// Extract returns a slice of strings for each extent of the input reader.
+// The order of the resulting slice matches the order of the provided exts slice
+// (which can be in any order; extract provides the necessary sorting to guarantee a single
+// scan pass on the reader).
+func Extract(r io.Reader, exts []Extent) ([]string, error) {
+	res := make([]string, len(exts))
+
+	wbuf, rbuf := bufio.NewWriter(ioutil.Discard), bufio.NewReader(r)
+
+	emap := argsort.SortSlice(exts, func(i, j int) bool { return exts[i].Start < exts[j].Start })
+
+	pos := 0
+	var prev bytes.Buffer
+	for _, i := range emap {
+		ext := exts[i]
+		// Copy out the span until the start of the current extent.
+		if err := copyRunesN(wbuf, rbuf, ext.Start-pos); err != nil {
+			return nil, err
+		}
+
+		// Consume the old content of the extent to be replaced.
+		// Save it into a buffer because the quoting heuristic needs the previous value.
+		if err := copyRunesN(&prev, rbuf, ext.End-ext.Start); err != nil {
+			return nil, err
+		}
+		res[i] = prev.String()
+		prev.Reset()
+
+		pos = ext.End
+	}
+
+	// Copy out the trailing span.
+	_, err := io.Copy(wbuf, rbuf)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 type runeWriter interface {

@@ -3,6 +3,7 @@ package yamled_test
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 	"knot8.io/pkg/yptr/yamled"
 )
 
-func TestSplice(t *testing.T) {
+func TestReplace(t *testing.T) {
 	src := `foo: abc
 bar: xy
 baz: end
@@ -123,6 +124,34 @@ baz: end
 			}
 			check("/foo", tc.foo)
 			check("/bar", tc.bar)
+		})
+	}
+}
+
+func TestExtract(t *testing.T) {
+	testCases := []struct {
+		in   string
+		ex   []yamled.Extent
+		want []string
+	}{
+		{"abcd", []yamled.Extent{{1, 2}}, []string{"b"}},
+		{"abcd", []yamled.Extent{{1, 2}, {2, 3}}, []string{"b", "c"}},
+		{"abcd", []yamled.Extent{{1, 3}}, []string{"bc"}},
+		{"abcd", []yamled.Extent{{0, 4}}, []string{"abcd"}},
+		{"abcd", []yamled.Extent{{3, 4}}, []string{"d"}},
+		{"abcd", []yamled.Extent{{4, 4}}, []string{""}},
+		{"abcd", []yamled.Extent{{1, 3}, {3, 4}}, []string{"bc", "d"}},
+		{"abcd", []yamled.Extent{{3, 4}, {1, 3}}, []string{"d", "bc"}},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			got, err := yamled.Extract(strings.NewReader(tc.in), tc.ex)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := tc.want; !reflect.DeepEqual(got, want) {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
 		})
 	}
 }

@@ -101,9 +101,8 @@ func quote(value, old string) (string, error) {
 			if reEncoded[0] != q {
 				if q == '"' {
 					return jsonMarshalString(value)
-				} else {
-					return yamlStringTrySingleQuoted(value, indent)
 				}
+				return yamlStringTrySingleQuoted(value, indent)
 			}
 		}
 	}

@@ -55,18 +55,18 @@ func (f *shadowFile) update(up func(b []byte) ([]byte, error)) error {
 	return nil
 }
 
-func (s *shadowFile) Commit() error {
-	b := []byte(string(s.buf))
+func (f *shadowFile) Commit() error {
+	b := []byte(string(f.buf))
 	var w io.Writer
-	if s.name == "-" {
+	if f.name == "-" {
 		w = os.Stdout
 	} else {
-		f, err := os.OpenFile(s.name, os.O_WRONLY|os.O_TRUNC, 0)
+		file, err := os.OpenFile(f.name, os.O_WRONLY|os.O_TRUNC, 0)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		w = f
+		defer file.Close()
+		w = file
 	}
 
 	_, err := w.Write(b)

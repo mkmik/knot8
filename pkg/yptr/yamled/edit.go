@@ -4,6 +4,7 @@
 package yamled
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"os"
@@ -76,7 +77,7 @@ func Extract(r io.Reader, exts ...Extent) ([]string, error) {
 	return res, nil
 }
 
-// UpdateFie updates a file in place.
+// UpdateFile updates a file in place.
 func UpdateFile(filename string, rs ...Replacement) error {
 	in, err := os.Open(filename)
 	if err != nil {
@@ -96,4 +97,13 @@ func UpdateFile(filename string, rs ...Replacement) error {
 	out.Close()
 
 	return os.Rename(out.Name(), filename)
+}
+
+// UpdateBuffer updates an in-memory buffer in place.
+func UpdateBuffer(b []byte, rs ...Replacement) ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, len(b)))
+	if err := Replace(buf, bytes.NewReader(b), rs...); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

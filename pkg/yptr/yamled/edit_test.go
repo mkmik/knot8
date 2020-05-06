@@ -159,7 +159,7 @@ func TestExtract(t *testing.T) {
 	}
 }
 
-func TestUpdateInPlace(t *testing.T) {
+func TestUpdateFile(t *testing.T) {
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -189,6 +189,28 @@ func TestUpdateInPlace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if got, want := string(b), "foo: baz\n"; got != want {
+		t.Errorf("got: %q, want: %q", got, want)
+	}
+}
+
+func TestUpdateBuffer(t *testing.T) {
+	src := []byte("foo: bar\n")
+
+	var doc yaml.Node
+	if err := yaml.Unmarshal(src, &doc); err != nil {
+		t.Fatal(err)
+	}
+
+	n, err := yptr.Find(&doc, "/foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := yamled.UpdateBuffer(src, yamled.NewReplacement("baz", n))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if got, want := string(b), "foo: baz\n"; got != want {
 		t.Errorf("got: %q, want: %q", got, want)
 	}

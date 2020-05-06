@@ -9,10 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"unicode"
 
-	"github.com/mkmik/argsort"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,58 +30,61 @@ func NewReplacement(value string, node *yaml.Node) Replacement {
 // Replace copies text from r to w while replacing text at given rune extents,
 // as specified by the reps slice.
 func Replace(w io.Writer, r io.Reader, reps []Replacement) error {
-	rmap := argsort.SortSlice(reps, func(i, j int) bool { return reps[i].ext.Start < reps[j].ext.Start })
-
 	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
 	defer wbuf.Flush()
 
-	// scan the input, rune by rune, while maintaining the current pos
-	for cur, rindex := 0, 0; rindex < len(reps); cur++ {
-		ch, _, err := rbuf.ReadRune()
-		if err != nil {
+	sreps := make([]Replacement, len(reps))
+	copy(sreps, reps)
+	sort.Slice(sreps, func(i, j int) bool { return reps[i].ext.Start < reps[j].ext.Start })
+
+	pos := 0
+	var prev bytes.Buffer
+	for _, rep := range sreps {
+		// Copy out the span until the start of the current extent.
+		if err := copyRunesN(wbuf, rbuf, rep.ext.Start-pos); err != nil {
 			return err
 		}
 
-		r := reps[rmap[rindex]]
-		if r.ext.Start == cur {
-			rindex++
-
-			l := r.ext.Len()
-			cur += l
-
-			old, err := readRunes(rbuf, l)
-			if err != nil {
-				return err
-			}
-
-			q, err := quote(r.value, string(old))
-			if err != nil {
-				return err
-			}
-
-			if _, err := wbuf.WriteString(q); err != nil {
-				return err
-			}
-		} else {
-			if _, err := wbuf.WriteRune(ch); err != nil {
-				return err
-			}
+		// Consume the old content of the extent to be replaced.
+		// Save it into a buffer because the quoting heuristic needs the previous value.
+		if err := copyRunesN(&prev, rbuf, rep.ext.End-rep.ext.Start); err != nil {
+			return err
 		}
+
+		q, err := quote(rep.value, prev.String())
+		if err != nil {
+			return err
+		}
+		prev.Reset()
+
+		// Emit the quoted string
+		if _, err := wbuf.WriteString(q); err != nil {
+			return err
+		}
+
+		pos = rep.ext.End
 	}
+
+	// Copy out the trailing span.
 	_, err := io.Copy(wbuf, rbuf)
 	return err
 }
 
-func readRunes(r io.RuneReader, n int) ([]rune, error) {
-	var res []rune
+type runeWriter interface {
+	WriteRune(r rune) (size int, err error)
+}
+
+func copyRunesN(w runeWriter, r io.RuneReader, n int) error {
 	for i := 0; i < n; i++ {
 		ch, _, err := r.ReadRune()
 		if err != nil {
-			return nil, err
+			return err
 		}
-		res = append(res, ch)
+		if _, err := w.WriteRune(ch); err != nil {
+			return err
+		}
 	}
-	return res, nil
+	return nil
 }
 
 // quote quotes a string into a yaml string.
@@ -183,9 +186,4 @@ func NewExtent(n *yaml.Node) Extent {
 		d = 1
 	}
 	return Extent{n.Index, n.IndexEnd - d}
-}
-
-// Len returns the number of runes in the extent.
-func (e Extent) Len() int {
-	return e.End - e.Start - 1
 }

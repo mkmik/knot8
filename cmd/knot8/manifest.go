@@ -20,6 +20,10 @@ type Manifest struct {
 	source manifestSource
 }
 
+func (m manifestSource) reader() io.Reader {
+	return bytes.NewReader(m.file.buf)
+}
+
 type ObjectMetadata struct {
 	Annotations map[string]string `json:"annotations"`
 }

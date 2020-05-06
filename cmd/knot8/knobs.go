@@ -81,6 +81,7 @@ type KnobTarget struct {
 	ptr   Pointer
 	line  int
 	loc   yamled.Extent
+	raw   string
 }
 
 func checkKnobValues(values []KnobTarget) bool {
@@ -118,7 +119,13 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 			continue
 		}
 
-		res = append(res, KnobTarget{f.Value, p, f.Line, yamled.NewExtent(f)})
+		loc := yamled.NewExtent(f)
+		raw, err := yamled.Extract(p.Manifest.source.reader(), loc)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		res = append(res, KnobTarget{f.Value, p, f.Line, loc, raw[0]})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)

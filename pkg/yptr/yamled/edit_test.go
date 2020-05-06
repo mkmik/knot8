@@ -90,13 +90,13 @@ baz: end
 				t.Fatal(err)
 			}
 
-			edits := []yamled.Edit{
-				yamled.NewEdit(tc.foo, foo),
-				yamled.NewEdit(tc.bar, bar),
+			edits := []yamled.Replacement{
+				yamled.NewReplacement(tc.foo, foo),
+				yamled.NewReplacement(tc.bar, bar),
 			}
 
 			var tmp bytes.Buffer
-			if err := yamled.Transform(&tmp, strings.NewReader(src), edits); err != nil {
+			if err := yamled.Replace(&tmp, strings.NewReader(src), edits); err != nil {
 				t.Fatal(err)
 			}
 			t.Logf("after:\n%s", tmp.String())

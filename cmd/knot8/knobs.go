@@ -130,7 +130,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 // and performed in the right order by the Commit method.
 type EditBatch struct {
 	ks    Knobs
-	edits map[*shadowFile][]yamled.Edit
+	edits map[*shadowFile][]yamled.Replacement
 
 	committed bool
 }
@@ -138,7 +138,7 @@ type EditBatch struct {
 func (ks Knobs) NewEditBatch() EditBatch {
 	return EditBatch{
 		ks:    ks,
-		edits: map[*shadowFile][]yamled.Edit{},
+		edits: map[*shadowFile][]yamled.Replacement{},
 	}
 }
 
@@ -160,7 +160,7 @@ func (b EditBatch) Set(n, v string) error {
 			continue
 		}
 		file := p.Manifest.source.file
-		b.edits[file] = append(b.edits[file], yamled.NewEdit(v, f))
+		b.edits[file] = append(b.edits[file], yamled.NewReplacement(v, f))
 	}
 	if errs != nil {
 		return multierror.Join(errs)

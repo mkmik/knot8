@@ -49,9 +49,9 @@ func newShadowFile(filename string) (*shadowFile, error) {
 	return &shadowFile{name: filename, buf: buf}, nil
 }
 
-func (f *shadowFile) edit(edits []yamled.Edit) error {
+func (f *shadowFile) edit(edits []yamled.Replacement) error {
 	var nbuf bytes.Buffer
-	if err := yamled.Transform(&nbuf, strings.NewReader(string(f.buf)), edits); err != nil {
+	if err := yamled.Replace(&nbuf, strings.NewReader(string(f.buf)), edits); err != nil {
 		return err
 	}
 

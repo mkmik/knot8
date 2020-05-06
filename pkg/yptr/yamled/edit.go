@@ -16,43 +16,45 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// An Edit structure captures a request to splice Value into a given extent of a buffer.
-type Edit struct {
+// An Replacement structure captures a request to replace Value into a given extent of a yaml file.
+type Replacement struct {
 	ext   Extent
 	value string
 }
 
-// NewEdit constructs a new Edit structure from a value and a yaml.Node.
-func NewEdit(value string, node *yaml.Node) Edit {
-	return Edit{NewExtent(node), value}
+// NewReplacement constructs a new Replacement structure from a value and a yaml.Node.
+func NewReplacement(value string, node *yaml.Node) Replacement {
+	return Replacement{NewExtent(node), value}
 }
 
-// Transform copies copies text from r to w while replacing text at given rune extents,
-// as specified by the edits slice.
-func Transform(w io.Writer, r io.Reader, edits []Edit) error {
-	edmap := argsort.SortSlice(edits, func(i, j int) bool { return edits[i].ext.Start < edits[j].ext.Start })
+// Replace copies text from r to w while replacing text at given rune extents,
+// as specified by the reps slice.
+func Replace(w io.Writer, r io.Reader, reps []Replacement) error {
+	rmap := argsort.SortSlice(reps, func(i, j int) bool { return reps[i].ext.Start < reps[j].ext.Start })
 
 	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
 	defer wbuf.Flush()
 
-	for i, e := 0, 0; e < len(edits); i++ {
+	// scan the input, rune by rune, while maintaining the current pos
+	for cur, rindex := 0, 0; rindex < len(reps); cur++ {
 		ch, _, err := rbuf.ReadRune()
 		if err != nil {
 			return err
 		}
 
-		ed := edits[edmap[e]]
-		if ed.ext.Start == i {
-			l := ed.ext.Len()
-			i += l
-			e++
+		r := reps[rmap[rindex]]
+		if r.ext.Start == cur {
+			rindex++
+
+			l := r.ext.Len()
+			cur += l
 
 			old, err := readRunes(rbuf, l)
 			if err != nil {
 				return err
 			}
 
-			q, err := quote(ed.value, string(old))
+			q, err := quote(r.value, string(old))
 			if err != nil {
 				return err
 			}

@@ -13,6 +13,53 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Replacer replaces nodes in a yaml file.
+type Replacer struct {
+	Replacements []Replacement
+}
+
+func NewReplacer(rs ...Replacement) Replacer {
+	return Replacer{rs}
+}
+
+// Bytes applies the replacer on a byte buffer.
+func (r Replacer) Bytes(b []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, len(b)))
+	if err := r.transform(buf, bytes.NewReader(b)); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (r Replacer) File(filename string) error {
+	in, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := ioutil.TempFile(filepath.Dir(filename), ".*~")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(out.Name())
+
+	if err := r.transform(out, in); err != nil {
+		return err
+	}
+	out.Close()
+
+	return os.Rename(out.Name(), filename)
+}
+
+func (r Replacer) transform(w io.Writer, in io.Reader) error {
+	reps := make([]replacer, len(r.Replacements))
+	for i, rep := range r.Replacements {
+		reps[i] = rep.asReplacer()
+	}
+	return transform(w, in, reps)
+}
+
 // Extent is a pair of start+end rune indices.
 type Extent struct {
 	Start int
@@ -45,16 +92,6 @@ func NewReplacement(value string, node *yaml.Node) Replacement {
 	return Replacement{NewExtent(node), value}
 }
 
-// Replace copies text from r to w while replacing text at given rune extents,
-// as specified by the reps slice.
-func Replace(w io.Writer, r io.Reader, rs ...Replacement) error {
-	reps := make([]replacer, len(rs))
-	for i := range rs {
-		reps[i] = rs[i].asReplacer()
-	}
-	return transform(w, r, reps)
-}
-
 // Extract returns a slice of strings for each extent of the input reader.
 // The order of the resulting slice matches the order of the provided exts slice
 // (which can be in any order; extract provides the necessary sorting to guarantee a single
@@ -75,35 +112,4 @@ func Extract(r io.Reader, exts ...Extent) ([]string, error) {
 		return nil, err
 	}
 	return res, nil
-}
-
-// UpdateFile updates a file in place.
-func UpdateFile(filename string, rs ...Replacement) error {
-	in, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := ioutil.TempFile(filepath.Dir(filename), ".*~")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(out.Name())
-
-	if err := Replace(out, in, rs...); err != nil {
-		return err
-	}
-	out.Close()
-
-	return os.Rename(out.Name(), filename)
-}
-
-// UpdateBuffer updates an in-memory buffer in place.
-func UpdateBuffer(b []byte, rs ...Replacement) ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, len(b)))
-	if err := Replace(buf, bytes.NewReader(b), rs...); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }

@@ -1,7 +1,6 @@
 package yamled_test
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +14,7 @@ import (
 	"knot8.io/pkg/yptr/yamled"
 )
 
-func TestReplace(t *testing.T) {
+func TestReplacer(t *testing.T) {
 	src := `foo: abc
 bar: xy
 baz: end
@@ -78,9 +77,9 @@ baz: end
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			buf := bytes.NewBuffer([]byte(src))
 			var n yaml.Node
-			if err := yaml.Unmarshal(buf.Bytes(), &n); err != nil {
+			buf := []byte(src)
+			if err := yaml.Unmarshal(buf, &n); err != nil {
 				t.Fatal(err)
 			}
 
@@ -99,16 +98,14 @@ baz: end
 				yamled.NewReplacement(tc.bar, bar),
 			}
 
-			var tmp bytes.Buffer
-			if err := yamled.Replace(&tmp, strings.NewReader(src), edits...); err != nil {
+			buf, err = yamled.NewReplacer(edits...).Bytes([]byte(src))
+			if err != nil {
 				t.Fatal(err)
 			}
-			t.Logf("after:\n%s", tmp.String())
-
-			*buf = tmp
+			t.Logf("after:\n%s", string(buf))
 
 			var ne yaml.Node
-			if err := yaml.Unmarshal(buf.Bytes(), &ne); err != nil {
+			if err := yaml.Unmarshal(buf, &ne); err != nil {
 				t.Fatal(err)
 			}
 
@@ -159,7 +156,7 @@ func TestExtract(t *testing.T) {
 	}
 }
 
-func TestUpdateFile(t *testing.T) {
+func TestReplacerFile(t *testing.T) {
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -181,7 +178,8 @@ func TestUpdateFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := yamled.UpdateFile(tmp.Name(), yamled.NewReplacement("baz", n)); err != nil {
+	r := yamled.NewReplacement("baz", n)
+	if err := yamled.NewReplacer(r).File(tmp.Name()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -189,28 +187,6 @@ func TestUpdateFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := string(b), "foo: baz\n"; got != want {
-		t.Errorf("got: %q, want: %q", got, want)
-	}
-}
-
-func TestUpdateBuffer(t *testing.T) {
-	src := []byte("foo: bar\n")
-
-	var doc yaml.Node
-	if err := yaml.Unmarshal(src, &doc); err != nil {
-		t.Fatal(err)
-	}
-
-	n, err := yptr.Find(&doc, "/foo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := yamled.UpdateBuffer(src, yamled.NewReplacement("baz", n))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	if got, want := string(b), "foo: baz\n"; got != want {
 		t.Errorf("got: %q, want: %q", got, want)
 	}

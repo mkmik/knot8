@@ -36,7 +36,7 @@ func NewReplacement(value string, node *yaml.Node) Replacement {
 
 // Replace copies text from r to w while replacing text at given rune extents,
 // as specified by the reps slice.
-func Replace(w io.Writer, r io.Reader, rs []Replacement) error {
+func Replace(w io.Writer, r io.Reader, rs ...Replacement) error {
 	reps := make([]replacer, len(rs))
 	for i := range rs {
 		reps[i] = rs[i].asReplacer()
@@ -48,7 +48,7 @@ func Replace(w io.Writer, r io.Reader, rs []Replacement) error {
 // The order of the resulting slice matches the order of the provided exts slice
 // (which can be in any order; extract provides the necessary sorting to guarantee a single
 // scan pass on the reader).
-func Extract(r io.Reader, exts []Extent) ([]string, error) {
+func Extract(r io.Reader, exts ...Extent) ([]string, error) {
 	var (
 		reps = make([]replacer, len(exts))
 		res  = make([]string, len(exts))
@@ -80,7 +80,7 @@ func UpdateFile(filename string, rs ...Replacement) error {
 	}
 	defer os.RemoveAll(out.Name())
 
-	if err := Replace(out, in, rs); err != nil {
+	if err := Replace(out, in, rs...); err != nil {
 		return err
 	}
 	out.Close()

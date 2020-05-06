@@ -100,7 +100,7 @@ baz: end
 			}
 
 			var tmp bytes.Buffer
-			if err := yamled.Replace(&tmp, strings.NewReader(src), edits); err != nil {
+			if err := yamled.Replace(&tmp, strings.NewReader(src), edits...); err != nil {
 				t.Fatal(err)
 			}
 			t.Logf("after:\n%s", tmp.String())
@@ -148,7 +148,7 @@ func TestExtract(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := yamled.Extract(strings.NewReader(tc.in), tc.ex)
+			got, err := yamled.Extract(strings.NewReader(tc.in), tc.ex...)
 			if err != nil {
 				t.Fatal(err)
 			}

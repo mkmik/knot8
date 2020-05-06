@@ -15,7 +15,6 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
-	"knot8.io/pkg/yptr/yamled"
 )
 
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
@@ -47,13 +46,12 @@ func newShadowFile(filename string) (*shadowFile, error) {
 	return &shadowFile{name: filename, buf: buf}, nil
 }
 
-func (f *shadowFile) edit(edits []yamled.Replacement) error {
-	n, err := yamled.UpdateBuffer(f.buf, edits...)
+func (f *shadowFile) update(up func(b []byte) ([]byte, error)) error {
+	b, err := up(f.buf)
 	if err != nil {
 		return err
 	}
-	f.buf = n
-
+	f.buf = b
 	return nil
 }
 

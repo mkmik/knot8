@@ -180,7 +180,8 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if err := f.edit(edits); err != nil {
+		up := func(b []byte) ([]byte, error) { return yamled.UpdateBuffer(b, edits...) }
+		if err := f.update(up); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}

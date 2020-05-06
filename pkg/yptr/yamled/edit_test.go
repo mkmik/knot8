@@ -3,6 +3,9 @@ package yamled_test
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -153,5 +156,40 @@ func TestExtract(t *testing.T) {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})
+	}
+}
+
+func TestUpdateInPlace(t *testing.T) {
+	tmp, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmp.Name())
+
+	fmt.Fprintf(tmp, "foo: bar\n")
+
+	if _, err := tmp.Seek(0, io.SeekStart); err != nil {
+		t.Fatal(err)
+	}
+	var doc yaml.Node
+	if err := yaml.NewDecoder(tmp).Decode(&doc); err != nil {
+		t.Fatal(err)
+	}
+	tmp.Close()
+
+	n, err := yptr.Find(&doc, "/foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := yamled.UpdateFile(tmp.Name(), yamled.NewReplacement("baz", n)); err != nil {
+		t.Fatal(err)
+	}
+
+	b, err := ioutil.ReadFile(tmp.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(b), "foo: baz\n"; got != want {
+		t.Errorf("got: %q, want: %q", got, want)
 	}
 }

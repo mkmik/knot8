@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -62,6 +64,28 @@ func Extract(r io.Reader, exts []Extent) ([]string, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+// UpdateFie updates a file in place.
+func UpdateFile(filename string, rs ...Replacement) error {
+	in, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := ioutil.TempFile(filepath.Dir(filename), ".*~")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(out.Name())
+
+	if err := Replace(out, in, rs); err != nil {
+		return err
+	}
+	out.Close()
+
+	return os.Rename(out.Name(), filename)
 }
 
 type replacer struct {

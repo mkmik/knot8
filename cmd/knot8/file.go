@@ -4,13 +4,11 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
@@ -23,7 +21,7 @@ import (
 // A shadowFile is in-memory copy of a file that can be commited back to disk.
 type shadowFile struct {
 	name string
-	buf  []rune
+	buf  []byte
 }
 
 func newShadowFile(filename string) (*shadowFile, error) {
@@ -42,7 +40,7 @@ func newShadowFile(filename string) (*shadowFile, error) {
 		r = f
 	}
 
-	buf, err := readFileRunes(r)
+	buf, err := readAllTranscode(r)
 	if err != nil {
 		return nil, err
 	}
@@ -50,16 +48,11 @@ func newShadowFile(filename string) (*shadowFile, error) {
 }
 
 func (f *shadowFile) edit(edits []yamled.Replacement) error {
-	var nbuf bytes.Buffer
-	if err := yamled.Replace(&nbuf, strings.NewReader(string(f.buf)), edits...); err != nil {
-		return err
-	}
-
-	rnew, err := readAllRunes(&nbuf)
+	n, err := yamled.UpdateBuffer(f.buf, edits...)
 	if err != nil {
 		return err
 	}
-	f.buf = rnew
+	f.buf = n
 
 	return nil
 }
@@ -144,25 +137,9 @@ func onlyFiles(paths []string) ([]string, error) {
 	return res, nil
 }
 
-// readFileRunes reads a text file encoded as either UTF-8 or UTF-16, both LE and BE
-// (which are the supported encodings of YAML), and return an array of runes which
-// we can operate on in order to implement rune-addressed in-place edits.
-func readFileRunes(r io.Reader) ([]rune, error) {
+// readAllTranscode reads a text input encoded as either UTF-8 or UTF-16, both LE and BE
+// (which are the supported encodings of YAML),
+func readAllTranscode(r io.Reader) ([]byte, error) {
 	t := unicode.BOMOverride(runes.ReplaceIllFormed())
-	return readAllRunes(bufio.NewReader(transform.NewReader(r, t)))
-}
-
-// readAllRunes returns a slice of runes. API modeled after ioutil.ReadAll but the implementation is inefficient.
-func readAllRunes(r io.RuneReader) ([]rune, error) {
-	var res []rune
-	for {
-		ch, _, err := r.ReadRune()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		res = append(res, ch)
-	}
-	return res, nil
+	return ioutil.ReadAll(transform.NewReader(r, t))
 }

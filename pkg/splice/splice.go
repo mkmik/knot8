@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: BSD-2-Clause
+
 /*
 Package splice allows to perform simple edits on a string, byte buffer or a file.
 

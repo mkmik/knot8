@@ -160,6 +160,28 @@ func File(filename string, r ...Op) error {
 	return os.Rename(out.Name(), filename)
 }
 
+// Slice returns a slice of strings for each extent of the input reader.
+// The order of the resulting slice matches the order of the provided exts slice
+// (which can be in any order; extract provides the necessary sorting to guarantee a single
+// scan pass on the reader).
+func Slice(r io.ReadSeeker, sels ...Selection) ([]string, error) {
+	var (
+		reps = make([]Op, len(sels))
+		res  = make([]string, len(sels))
+	)
+	for i, sel := range sels {
+		i := i
+		reps[i] = sel.WithFunc(func(prev string) (string, error) {
+			res[i] = prev
+			return prev, nil
+		})
+	}
+	if err := Transform(ioutil.Discard, r, reps...); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // resolvePositions resolves line:col positions by performing one pass through a reader.
 // It's useful because the current transform implementation can only handle absolute rune addresses.
 func resolvePositions(in io.ReadSeeker, rs []Op) ([]replacer, error) {

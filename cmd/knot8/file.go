@@ -46,15 +46,6 @@ func newShadowFile(filename string) (*shadowFile, error) {
 	return &shadowFile{name: filename, buf: buf}, nil
 }
 
-func (f *shadowFile) update(up func(b []byte) ([]byte, error)) error {
-	b, err := up(f.buf)
-	if err != nil {
-		return err
-	}
-	f.buf = b
-	return nil
-}
-
 func (f *shadowFile) Commit() error {
 	b := []byte(string(f.buf))
 	var w io.Writer

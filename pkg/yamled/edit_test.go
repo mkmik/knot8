@@ -2,16 +2,14 @@ package yamled_test
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
-	"knot8.io/pkg/yptr"
+	"knot8.io/pkg/splice"
 	"knot8.io/pkg/yamled"
+	"knot8.io/pkg/yptr"
 )
 
 func TestReplacer(t *testing.T) {
@@ -93,12 +91,10 @@ baz: end
 				t.Fatal(err)
 			}
 
-			edits := []yamled.Replacement{
-				yamled.NewReplacement(tc.foo, foo),
-				yamled.NewReplacement(tc.bar, bar),
-			}
-
-			buf, err = yamled.NewReplacer(edits...).Bytes([]byte(src))
+			buf, err = splice.Bytes([]byte(src),
+				yamled.Node(foo).With(tc.foo),
+				yamled.Node(bar).With(tc.bar),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -128,24 +124,25 @@ baz: end
 	}
 }
 
-func TestExtract(t *testing.T) {
+func TestSlice(t *testing.T) {
+	s := func(s ...splice.Selection) []splice.Selection { return s }
 	testCases := []struct {
 		in   string
-		ex   []yamled.Extent
+		sel  []splice.Selection
 		want []string
 	}{
-		{"abcd", []yamled.Extent{{1, 2}}, []string{"b"}},
-		{"abcd", []yamled.Extent{{1, 2}, {2, 3}}, []string{"b", "c"}},
-		{"abcd", []yamled.Extent{{1, 3}}, []string{"bc"}},
-		{"abcd", []yamled.Extent{{0, 4}}, []string{"abcd"}},
-		{"abcd", []yamled.Extent{{3, 4}}, []string{"d"}},
-		{"abcd", []yamled.Extent{{4, 4}}, []string{""}},
-		{"abcd", []yamled.Extent{{1, 3}, {3, 4}}, []string{"bc", "d"}},
-		{"abcd", []yamled.Extent{{3, 4}, {1, 3}}, []string{"d", "bc"}},
+		{"abcd", s(splice.Span(1, 2)), []string{"b"}},
+		{"abcd", s(splice.Span(1, 2), splice.Span(2, 3)), []string{"b", "c"}},
+		{"abcd", s(splice.Span(1, 3)), []string{"bc"}},
+		{"abcd", s(splice.Span(0, 4)), []string{"abcd"}},
+		{"abcd", s(splice.Span(3, 4)), []string{"d"}},
+		{"abcd", s(splice.Span(4, 4)), []string{""}},
+		{"abcd", s(splice.Span(1, 3), splice.Span(3, 4)), []string{"bc", "d"}},
+		{"abcd", s(splice.Span(3, 4), splice.Span(1, 3)), []string{"d", "bc"}},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := yamled.Extract(strings.NewReader(tc.in), tc.ex...)
+			got, err := splice.Slice(strings.NewReader(tc.in), tc.sel...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -153,41 +150,5 @@ func TestExtract(t *testing.T) {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})
-	}
-}
-
-func TestReplacerFile(t *testing.T) {
-	tmp, err := ioutil.TempFile("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmp.Name())
-
-	fmt.Fprintf(tmp, "foo: bar\n")
-
-	if _, err := tmp.Seek(0, io.SeekStart); err != nil {
-		t.Fatal(err)
-	}
-	var doc yaml.Node
-	if err := yaml.NewDecoder(tmp).Decode(&doc); err != nil {
-		t.Fatal(err)
-	}
-	tmp.Close()
-
-	n, err := yptr.Find(&doc, "/foo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	r := yamled.NewReplacement("baz", n)
-	if err := yamled.NewReplacer(r).File(tmp.Name()); err != nil {
-		t.Fatal(err)
-	}
-
-	b, err := ioutil.ReadFile(tmp.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := string(b), "foo: baz\n"; got != want {
-		t.Errorf("got: %q, want: %q", got, want)
 	}
 }

@@ -10,8 +10,9 @@ import (
 
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
-	"knot8.io/pkg/yptr"
+	"knot8.io/pkg/splice"
 	"knot8.io/pkg/yamled"
+	"knot8.io/pkg/yptr"
 )
 
 const (
@@ -80,7 +81,7 @@ type KnobTarget struct {
 	value string
 	ptr   Pointer
 	line  int
-	loc   yamled.Extent
+	loc   yamled.Selection
 	raw   string
 }
 
@@ -119,8 +120,8 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 			continue
 		}
 
-		loc := yamled.NewExtent(f)
-		raw, err := yamled.Extract(p.Manifest.source.reader(), loc)
+		loc := yamled.Node(f)
+		raw, err := splice.Slice(p.Manifest.source.reader(), loc.Selection)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -137,7 +138,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 // and performed in the right order by the Commit method.
 type EditBatch struct {
 	ks    Knobs
-	edits map[*shadowFile][]yamled.Replacement
+	edits map[*shadowFile][]splice.Op
 
 	committed bool
 }
@@ -145,7 +146,7 @@ type EditBatch struct {
 func (ks Knobs) NewEditBatch() EditBatch {
 	return EditBatch{
 		ks:    ks,
-		edits: map[*shadowFile][]yamled.Replacement{},
+		edits: map[*shadowFile][]splice.Op{},
 	}
 }
 
@@ -167,7 +168,7 @@ func (b EditBatch) Set(n, v string) error {
 			continue
 		}
 		file := p.Manifest.source.file
-		b.edits[file] = append(b.edits[file], yamled.NewReplacement(v, f))
+		b.edits[file] = append(b.edits[file], yamled.Node(f).With(v))
 	}
 	if errs != nil {
 		return multierror.Join(errs)
@@ -180,7 +181,7 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if err := f.update(yamled.NewReplacer(edits...).Bytes); err != nil {
+		if err := splice.SwapBytes(&f.buf, edits...); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		}
 	}

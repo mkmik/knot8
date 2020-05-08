@@ -11,6 +11,7 @@ import (
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/splice"
+	"knot8.io/pkg/splice/transform"
 	"knot8.io/pkg/yamled"
 	"knot8.io/pkg/yptr"
 )
@@ -181,8 +182,10 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if err := splice.SwapBytes(&f.buf, edits...); err != nil {
+		if b, _, err := transform.Bytes(splice.T(edits...), f.buf); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
+		} else {
+			f.buf = b
 		}
 	}
 	if errs != nil {

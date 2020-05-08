@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	"knot8.io/pkg/splice"
+	"knot8.io/pkg/splice/atomicfile"
+	"knot8.io/pkg/splice/transform"
 )
 
 func ExampleOp() {
@@ -24,7 +26,7 @@ func ExampleOp() {
 func Example() {
 	src := "abcd"
 
-	res, err := splice.String(src, splice.Span(1, 2).With("B"))
+	res, _, err := transform.String(splice.T(splice.Span(1, 2).With("B")), src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,20 +39,22 @@ func Example() {
 func Example_multiple() {
 	src := "abcd"
 
-	aBcD, err := splice.String(src,
+	t := splice.T(
 		splice.Span(1, 2).With("B"),
 		splice.Span(3, 4).With("D"),
 	)
+	aBcD, _, err := transform.String(t, src)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(aBcD)
 
-	aBaDa, err := splice.String(src,
+	t = splice.T(
 		splice.Span(1, 2).With("Ba"),
 		splice.Span(2, 3).With(""),
 		splice.Span(3, 4).With("Da"),
 	)
+	aBaDa, _, err := transform.String(t, src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,7 +68,8 @@ func Example_multiple() {
 func Example_lineCol() {
 	src := "abcd\nefgh"
 
-	res, err := splice.String(src, splice.Sel(splice.Loc(2, 2), splice.Loc(2, 3)).With("X"))
+	t := splice.T(splice.Sel(splice.Loc(2, 2), splice.Loc(2, 3)).With("X"))
+	res, _, err := transform.String(t, src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +82,8 @@ func Example_lineCol() {
 func Example_insert() {
 	src := "abcd"
 
-	res, err := splice.String(src, splice.Span(2, 2).With("X"))
+	t := splice.T(splice.Span(2, 2).With("X"))
+	res, _, err := transform.String(t, src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +96,8 @@ func Example_insert() {
 func Example_delete() {
 	src := "abcd"
 
-	res, err := splice.String(src, splice.Span(2, 3).With(""))
+	t := splice.T(splice.Span(2, 3).With(""))
+	res, _, err := transform.String(t, src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,7 +109,9 @@ func Example_delete() {
 
 func ExampleBytes() {
 	buf := []byte("abcd")
-	aBcd, err := splice.Bytes(buf, splice.Span(1, 2).With("B"))
+
+	t := splice.T(splice.Span(1, 2).With("B"))
+	aBcd, _, err := transform.Bytes(t, buf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,18 +121,7 @@ func ExampleBytes() {
 	// aBcd
 }
 
-func ExampleSwapBytes() {
-	buf := []byte("abcd")
-	if err := splice.SwapBytes(&buf, splice.Span(1, 2).With("B")); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(buf))
-
-	// Output:
-	// aBcd
-}
-
-func ExampleFile() {
+func Example_file() {
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
 		log.Fatal(err)
@@ -133,7 +131,8 @@ func ExampleFile() {
 	fmt.Fprintf(tmp, "abcd")
 	tmp.Close()
 
-	if err := splice.File(tmp.Name(), splice.Span(1, 3).With("X")); err != nil {
+	t := splice.T(splice.Span(1, 3).With("X"))
+	if err := atomicfile.Transform(t, tmp.Name()); err != nil {
 		log.Fatal(err)
 	}
 
@@ -166,7 +165,8 @@ func TestOps(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := splice.String(tc.in, tc.ops...)
+			tr := splice.T(tc.ops...)
+			got, _, err := transform.String(tr, tc.in)
 			if err != nil {
 				t.Fatal(err)
 			}

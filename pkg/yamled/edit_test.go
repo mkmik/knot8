@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/splice"
+	"knot8.io/pkg/splice/transform"
 	"knot8.io/pkg/yamled"
 	"knot8.io/pkg/yptr"
 )
@@ -92,10 +93,10 @@ baz: end
 				t.Fatal(err)
 			}
 
-			buf, err = splice.Bytes([]byte(src),
+			buf, _, err = transform.Bytes(splice.T(
 				yamled.Node(foo).With(tc.foo),
 				yamled.Node(bar).With(tc.bar),
-			)
+			), []byte(src))
 			if err != nil {
 				t.Fatal(err)
 			}

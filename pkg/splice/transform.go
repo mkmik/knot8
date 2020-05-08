@@ -20,10 +20,10 @@ type extent struct {
 	End   int
 }
 
-// transform copies text from r to w while replacing text at given rune extents,
+// splice copies text from r to w while replacing text at given rune extents,
 // as specified by the reps slice. The text to be replaced is provided via a callback
 // function "replace" in the replacer structures.
-func transform(w io.Writer, r io.Reader, reps ...replacer) error {
+func splice(w io.Writer, r io.Reader, reps ...replacer) error {
 	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
 	defer wbuf.Flush()
 

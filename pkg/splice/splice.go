@@ -19,14 +19,22 @@ package splice
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 )
+
+func T(ops ...Op) Transformer { return Transformer(ops) }
+
+type Transformer []Op
+
+func (t Transformer) Transform(w io.Writer, r io.ReadSeeker) error {
+	re, err := resolvePositions(r, t)
+	if err != nil {
+		return err
+	}
+	return splice(w, r, re...)
+}
 
 // A Op captures a request to replace a selection with a replacement string.
 // An idiomatic way to construct an Op instance is to call With or WithFunc on a Selection.
@@ -90,79 +98,6 @@ func Sel(start, end Pos) Selection { return Selection{start, end} }
 // An Span is a shortcut for splice.Sel(splice.Offset(start), splice.Offset(end)).
 func Span(start, end int) Selection { return Sel(Offset(start), Offset(end)) }
 
-// Transform copies data from the in reader into the w writer while performing a set of replacements.
-func Transform(w io.Writer, in io.ReadSeeker, r ...Op) error {
-	re, err := resolvePositions(in, r)
-	if err != nil {
-		return err
-	}
-	return transform(w, in, re...)
-}
-
-// String applies a set of replacements into a string, returning the transformed string.
-func String(in string, r ...Op) (string, error) {
-	var out strings.Builder
-	re, err := resolvePositions(strings.NewReader(in), r)
-	if err != nil {
-		return "", err
-	}
-	if err := transform(&out, strings.NewReader(in), re...); err != nil {
-		return "", err
-	}
-	return out.String(), nil
-}
-
-// Bytes applies a set of replacements into a byte slice, returning the transformed byte slice.
-func Bytes(buf []byte, r ...Op) ([]byte, error) {
-	var out bytes.Buffer
-	re, err := resolvePositions(bytes.NewReader(buf), r)
-	if err != nil {
-		return nil, err
-	}
-	if err := transform(&out, bytes.NewReader(buf), re...); err != nil {
-		return nil, err
-	}
-	return out.Bytes(), nil
-}
-
-// SwapBytes applies a set of replacements into a byte slice, updating a byte slice variable passed by reference
-// to point to a new byte slice that contains the transformed data.
-func SwapBytes(buf *[]byte, r ...Op) error {
-	n, err := Bytes(*buf, r...)
-	if err != nil {
-		return err
-	}
-	*buf = n
-	return nil
-}
-
-// File applies a set of replacements into a file and writes the changes to it atomically.
-func File(filename string, r ...Op) error {
-	in, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	re, err := resolvePositions(in, r)
-	if err != nil {
-		return err
-	}
-
-	out, err := ioutil.TempFile(filepath.Dir(filename), ".*~")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(out.Name())
-
-	if err := transform(out, in, re...); err != nil {
-		return err
-	}
-	out.Close()
-
-	return os.Rename(out.Name(), filename)
-}
-
 // Peek returns a slice of strings for each extent of the input reader.
 // The order of the resulting slice matches the order of the provided selection slice
 // (which can be in any order; slice provides the necessary sorting to guarantee a single
@@ -179,7 +114,7 @@ func Peek(r io.ReadSeeker, sels ...Selection) ([]string, error) {
 			return prev, nil
 		})
 	}
-	if err := Transform(ioutil.Discard, r, reps...); err != nil {
+	if err := T(reps...).Transform(ioutil.Discard, r); err != nil {
 		return nil, err
 	}
 	return res, nil

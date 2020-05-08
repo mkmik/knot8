@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 
 	"knot8.io/pkg/splice"
@@ -166,6 +168,35 @@ func TestOps(t *testing.T) {
 				t.Fatal(err)
 			}
 			if want := tc.want; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+func TestSlice(t *testing.T) {
+	s := func(s ...splice.Selection) []splice.Selection { return s }
+	testCases := []struct {
+		in   string
+		sel  []splice.Selection
+		want []string
+	}{
+		{"abcd", s(splice.Span(1, 2)), []string{"b"}},
+		{"abcd", s(splice.Span(1, 2), splice.Span(2, 3)), []string{"b", "c"}},
+		{"abcd", s(splice.Span(1, 3)), []string{"bc"}},
+		{"abcd", s(splice.Span(0, 4)), []string{"abcd"}},
+		{"abcd", s(splice.Span(3, 4)), []string{"d"}},
+		{"abcd", s(splice.Span(4, 4)), []string{""}},
+		{"abcd", s(splice.Span(1, 3), splice.Span(3, 4)), []string{"bc", "d"}},
+		{"abcd", s(splice.Span(3, 4), splice.Span(1, 3)), []string{"d", "bc"}},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			got, err := splice.Slice(strings.NewReader(tc.in), tc.sel...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := tc.want; !reflect.DeepEqual(got, want) {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

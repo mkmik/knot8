@@ -174,7 +174,7 @@ func TestOps(t *testing.T) {
 	}
 }
 
-func TestSlice(t *testing.T) {
+func TestPeek(t *testing.T) {
 	s := func(s ...splice.Selection) []splice.Selection { return s }
 	testCases := []struct {
 		in   string
@@ -192,7 +192,7 @@ func TestSlice(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := splice.Slice(strings.NewReader(tc.in), tc.sel...)
+			got, err := splice.Peek(strings.NewReader(tc.in), tc.sel...)
 			if err != nil {
 				t.Fatal(err)
 			}

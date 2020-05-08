@@ -121,7 +121,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 		}
 
 		loc := yamled.Node(f)
-		raw, err := splice.Slice(p.Manifest.source.reader(), loc.Selection)
+		raw, err := splice.Peek(p.Manifest.source.reader(), loc.Selection)
 		if err != nil {
 			errs = append(errs, err)
 			continue

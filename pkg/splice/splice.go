@@ -161,8 +161,8 @@ func File(filename string, r ...Op) error {
 }
 
 // Slice returns a slice of strings for each extent of the input reader.
-// The order of the resulting slice matches the order of the provided exts slice
-// (which can be in any order; extract provides the necessary sorting to guarantee a single
+// The order of the resulting slice matches the order of the provided selection slice
+// (which can be in any order; slice provides the necessary sorting to guarantee a single
 // scan pass on the reader).
 func Slice(r io.ReadSeeker, sels ...Selection) ([]string, error) {
 	var (

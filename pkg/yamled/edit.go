@@ -12,12 +12,12 @@ import (
 func Quoted(op splice.Op) splice.Op {
 	o := op
 	saved := o.Replace
-	o.Replace = func(prev string) (string, error) {
-		v, err := saved(prev)
+	o.Replace = func(prev string, context string) (string, error) {
+		v, err := saved(prev, context)
 		if err != nil {
 			return "", err
 		}
-		return quote(v, prev)
+		return quote(v, prev, context)
 	}
 	return o
 }

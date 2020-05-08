@@ -23,8 +23,9 @@ import (
 // worse than it already was.
 //
 // TODO: preserve input indentation level
-func quote(value, old string) (string, error) {
-	indent := 2 // TODO: detect
+func quote(value, old, context string) (string, error) {
+	det := len(context) - len(strings.TrimLeft(context, " "))
+	indent := det + 2
 
 	if len(old) > 0 {
 		q := old[0]

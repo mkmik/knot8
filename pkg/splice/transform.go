@@ -12,7 +12,7 @@ import (
 
 type replacer struct {
 	ext  extent
-	repl func(prev string) (string, error)
+	repl func(prev, context string) (string, error)
 }
 
 type extent struct {
@@ -45,7 +45,7 @@ func splice(w io.Writer, r io.Reader, reps ...replacer) error {
 			return err
 		}
 
-		next, err := rep.repl(prev.String())
+		next, err := rep.repl(prev.String(), "  demo:") // TODO capture context
 		if err != nil {
 			return err
 		}

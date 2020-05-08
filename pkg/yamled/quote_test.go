@@ -61,7 +61,7 @@ func TestQuote(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := quote(tc.src, tc.old)
+			got, err := quote(tc.src, tc.old, "")
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/yptr"
-	"knot8.io/pkg/yptr/yamled"
+	"knot8.io/pkg/yamled"
 )
 
 func TestReplacer(t *testing.T) {

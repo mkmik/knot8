@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"testing"
 
 	"knot8.io/pkg/splice"
 )
@@ -139,4 +140,34 @@ func ExampleFile() {
 
 	// Output:
 	// aXd
+}
+
+func TestOps(t *testing.T) {
+	rep := func(ops ...splice.Op) []splice.Op { return ops }
+	testCases := []struct {
+		in   string
+		want string
+		ops  []splice.Op
+	}{
+		{"abcd", "abXcd", rep(splice.Span(2, 2).With("X"))},
+		{"abcd", "abd", rep(splice.Span(2, 3).With(""))},
+		{"abcd", "abYd", rep(splice.Span(2, 3).With("Y"))},
+		{"abcd", "ab x d", rep(splice.Span(2, 3).With(" x "))},
+		{"ab x d", "abcd", rep(splice.Span(2, 5).With("c"))},
+		{"abcd", "abcd$", rep(splice.Span(4, 4).With("$"))},
+		{"abcd", "^abcd", rep(splice.Span(0, 0).With("^"))},
+		{"abcd", "", rep(splice.Span(0, 4).With(""))},
+		{"", "abcd", rep(splice.Span(0, 0).With("abcd"))},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			got, err := splice.String(tc.in, tc.ops...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := tc.want; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
 }

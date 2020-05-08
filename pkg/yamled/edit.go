@@ -4,13 +4,11 @@
 package yamled
 
 import (
-	"bytes"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+	"knot8.io/pkg/splice"
 )
 
 // Replacer replaces nodes in a yaml file.
@@ -24,40 +22,19 @@ func NewReplacer(rs ...Replacement) Replacer {
 
 // Bytes applies the replacer on a byte buffer.
 func (r Replacer) Bytes(b []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, len(b)))
-	if err := r.transform(buf, bytes.NewReader(b)); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+	return splice.Bytes(b, r.asOps()...)
 }
 
 func (r Replacer) File(filename string) error {
-	in, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := ioutil.TempFile(filepath.Dir(filename), ".*~")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(out.Name())
-
-	if err := r.transform(out, in); err != nil {
-		return err
-	}
-	out.Close()
-
-	return os.Rename(out.Name(), filename)
+	return splice.File(filename, r.asOps()...)
 }
 
-func (r Replacer) transform(w io.Writer, in io.Reader) error {
-	reps := make([]replacer, len(r.Replacements))
+func (r Replacer) asOps() []splice.Op {
+	reps := make([]splice.Op, len(r.Replacements))
 	for i, rep := range r.Replacements {
-		reps[i] = rep.asReplacer()
+		reps[i] = rep.asOp()
 	}
-	return transform(w, in, reps)
+	return reps
 }
 
 // Extent is a pair of start+end rune indices.
@@ -65,6 +42,8 @@ type Extent struct {
 	Start int
 	End   int
 }
+
+func (e Extent) AsSelection() splice.Selection { return splice.Span(e.Start, e.End) }
 
 // NewExtent returns a Extent that covers the extent of a given yaml.Node.
 func NewExtent(n *yaml.Node) Extent {
@@ -83,8 +62,10 @@ type Replacement struct {
 	value string
 }
 
-func (r Replacement) asReplacer() replacer {
-	return replacer{r.ext, func(prev string) (string, error) { return quote(r.value, prev) }}
+func (r Replacement) asOp() splice.Op {
+	return r.ext.AsSelection().WithFunc(func(prev string) (string, error) {
+		return quote(r.value, prev)
+	})
 }
 
 // NewReplacement constructs a new Replacement structure from a value and a yaml.Node.
@@ -96,19 +77,19 @@ func NewReplacement(value string, node *yaml.Node) Replacement {
 // The order of the resulting slice matches the order of the provided exts slice
 // (which can be in any order; extract provides the necessary sorting to guarantee a single
 // scan pass on the reader).
-func Extract(r io.Reader, exts ...Extent) ([]string, error) {
+func Extract(r io.ReadSeeker, exts ...Extent) ([]string, error) {
 	var (
-		reps = make([]replacer, len(exts))
+		reps = make([]splice.Op, len(exts))
 		res  = make([]string, len(exts))
 	)
 	for i, ext := range exts {
 		i := i
-		reps[i] = replacer{ext, func(prev string) (string, error) {
+		reps[i] = ext.AsSelection().WithFunc(func(prev string) (string, error) {
 			res[i] = prev
 			return prev, nil
-		}}
+		})
 	}
-	if err := transform(ioutil.Discard, r, reps); err != nil {
+	if err := splice.Transform(ioutil.Discard, r, reps...); err != nil {
 		return nil, err
 	}
 	return res, nil

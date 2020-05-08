@@ -1,5 +1,5 @@
 /*
-Package splice allows to perform simple edit a string, byte buffer or a file.
+Package splice allows to perform simple edits on a string, byte buffer or a file.
 
 It allows to delete, insert or replace strings in a text buffer.
 
@@ -86,6 +86,15 @@ func Sel(start, end Pos) Selection { return Selection{start, end} }
 
 // An Span is a shortcut for splice.Sel(splice.Offset(start), splice.Offset(end)).
 func Span(start, end int) Selection { return Sel(Offset(start), Offset(end)) }
+
+// Transform copies data from the in reader into the w writer while performing a set of replacements.
+func Transform(w io.Writer, in io.ReadSeeker, r ...Op) error {
+	re, err := resolvePositions(in, r)
+	if err != nil {
+		return err
+	}
+	return transform(w, in, re...)
+}
 
 // String applies a set of replacements into a string, returning the transformed string.
 func String(in string, r ...Op) (string, error) {

@@ -23,29 +23,29 @@ type extent struct {
 // splice copies text from r to w while replacing text at given rune extents,
 // as specified by the reps slice. The text to be replaced is provided via a callback
 // function "replace" in the replacer structures.
-func splice(w io.Writer, r io.Reader, reps ...replacer) error {
+func splice(w io.Writer, r io.Reader, reps ...Op) error {
 	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
 	defer wbuf.Flush()
 
-	sorted := make([]replacer, len(reps))
+	sorted := make([]Op, len(reps))
 	copy(sorted, reps)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i].ext.Start < sorted[j].ext.Start })
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Start < sorted[j].Start })
 
 	pos := 0
 	var prev bytes.Buffer
 	for _, rep := range sorted {
 		// Copy out the span until the start of the current extent.
-		if err := copyRunesN(wbuf, rbuf, rep.ext.Start-pos); err != nil {
+		if err := copyRunesN(wbuf, rbuf, rep.Start-pos); err != nil {
 			return err
 		}
 
 		// Consume the old content of the extent to be replaced.
 		// Save it into a buffer because the quoting heuristic needs the previous value.
-		if err := copyRunesN(&prev, rbuf, rep.ext.End-rep.ext.Start); err != nil {
+		if err := copyRunesN(&prev, rbuf, rep.End-rep.Start); err != nil {
 			return err
 		}
 
-		next, err := rep.repl(prev.String(), "  demo:") // TODO capture context
+		next, err := rep.Replace(prev.String(), "  demo:") // TODO capture context
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func splice(w io.Writer, r io.Reader, reps ...replacer) error {
 		}
 		prev.Reset()
 
-		pos = rep.ext.End
+		pos = rep.End
 	}
 
 	// Copy out the trailing span.

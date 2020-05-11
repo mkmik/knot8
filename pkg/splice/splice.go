@@ -10,17 +10,14 @@ The core operation is: replace the current content of a given selection with a n
 Deletion is just replacement with an empty string.
 Insertion is just replacement at a zero length selection.
 
-Selections can be constructed from absolute start/end positions in the text buffer (unicode character offsets, not byte offsets!), of from line+column numbers (1-based, columns are unicode character offsets, not bytes).
+Selections are addressed by unicode character offsets, not byte offsets!.
 
 The edit operation involves one single pass through the input.
-A second pass through the input is currently necessary when using Line+Column numbers (see Loc).
 */
 package splice
 
 import (
-	"bufio"
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 
@@ -29,7 +26,7 @@ import (
 
 type Transformer struct {
 	buf  []byte
-	copy func(w io.Writer, r io.ReadSeeker) error
+	copy func(w io.Writer, r io.Reader) error
 }
 
 func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
@@ -65,12 +62,8 @@ func T(ops ...Op) *Transformer { return &Transformer{copy: Ops(ops).Transform} }
 
 type Ops []Op
 
-func (t Ops) Transform(w io.Writer, r io.ReadSeeker) error {
-	re, err := resolvePositions(r, t)
-	if err != nil {
-		return err
-	}
-	return splice(w, r, re...)
+func (t Ops) Transform(w io.Writer, r io.Reader) error {
+	return splice(w, r, t...)
 }
 
 // A Op captures a request to replace a selection with a replacement string.
@@ -82,13 +75,10 @@ type Op struct {
 
 // A selection selects a range of characters in the input string buffer.
 // It's defined to be the range that starts at Start end ends before the End position.
+// Positions are  unicode codepoint offsets, not byte offsets.
 type Selection struct {
-	Start Pos
-	End   Pos
-}
-
-func (s Selection) asExtent() extent {
-	return extent{s.Start.offset(), s.End.offset()}
+	Start int
+	End   int
 }
 
 // With returns an operation that captures a replacement of the current selection with a desired replacement string.
@@ -102,44 +92,14 @@ func (s Selection) WithFunc(f func(prev string, context string) (string, error))
 	return Op{s, f}
 }
 
-// A Pos is a position in the input string buffer.
-type Pos interface {
-	// absolute position, or 0 if not known
-	offset() int
-	// return true if current position matches provided line
-	match(line, col int) bool
-}
-
-// An Offset is an absolute rune position in the input string buffer.
-func Offset(pos int) Pos { return offset(pos) }
-
-type offset int
-
-func (a offset) offset() int       { return int(a) }
-func (offset) match(int, int) bool { return false }
-
-// A Loc is a line:col position in the input string buffer.
-func Loc(line, col int) Pos { return loc{line, col} }
-
-type loc struct {
-	line int
-	col  int
-}
-
-func (loc) offset() int                { return 0 }
-func (l loc) match(line, col int) bool { return l.line == line && l.col == col }
-
-// Sel constructs a selection from a start and end position.
-func Sel(start, end Pos) Selection { return Selection{start, end} }
-
-// An Span is a shortcut for splice.Sel(splice.Offset(start), splice.Offset(end)).
-func Span(start, end int) Selection { return Sel(Offset(start), Offset(end)) }
+// Span constructs a Selection.
+func Span(start, end int) Selection { return Selection{start, end} }
 
 // Peek returns a slice of strings for each extent of the input reader.
 // The order of the resulting slice matches the order of the provided selection slice
 // (which can be in any order; slice provides the necessary sorting to guarantee a single
 // scan pass on the reader).
-func Peek(r io.ReadSeeker, sels ...Selection) ([]string, error) {
+func Peek(r io.Reader, sels ...Selection) ([]string, error) {
 	var (
 		reps = make([]Op, len(sels))
 		res  = make([]string, len(sels))
@@ -154,48 +114,6 @@ func Peek(r io.ReadSeeker, sels ...Selection) ([]string, error) {
 
 	if _, err := io.Copy(ioutil.Discard, transform.NewReader(r, T(reps...))); err != nil {
 		return nil, err
-	}
-	return res, nil
-}
-
-// resolvePositions resolves line:col positions by performing one pass through a reader.
-// It's useful because the current transform implementation can only handle absolute rune addresses.
-func resolvePositions(in io.ReadSeeker, rs []Op) ([]replacer, error) {
-	defer in.Seek(0, 0)
-
-	res := make([]replacer, len(rs))
-	for i, r := range rs {
-		res[i] = replacer{
-			ext:  r.asExtent(),
-			repl: r.Replace,
-		}
-	}
-
-	rbuf := bufio.NewReader(in)
-	line, col := 1, 0
-	for i := 0; ; i++ {
-		ch, _, err := rbuf.ReadRune()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		for j := range rs {
-			if rs[j].Start.match(line, col) {
-				res[j].ext.Start = i
-			}
-			if rs[j].End.match(line, col) {
-				res[j].ext.End = i
-			}
-		}
-
-		if ch == '\n' {
-			line++
-			col = 0
-		}
-		col++
 	}
 	return res, nil
 }

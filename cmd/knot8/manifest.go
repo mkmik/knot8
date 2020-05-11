@@ -20,7 +20,7 @@ type Manifest struct {
 	source manifestSource
 }
 
-func (m manifestSource) reader() io.ReadSeeker {
+func (m manifestSource) reader() io.Reader {
 	return bytes.NewReader(m.file.buf)
 }
 

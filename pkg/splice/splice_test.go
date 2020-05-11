@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"golang.org/x/text/transform"
-	"knot8.io/pkg/splice"
 	"knot8.io/pkg/atomicfile"
+	"knot8.io/pkg/splice"
 )
 
 func ExampleOp() {
@@ -63,20 +63,6 @@ func Example_multiple() {
 	// Output:
 	// aBcD
 	// aBaDa
-}
-
-func Example_lineCol() {
-	src := "abcd\nefgh"
-
-	t := splice.T(splice.Sel(splice.Loc(2, 2), splice.Loc(2, 3)).With("X"))
-	res, _, err := transform.String(t, src)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(res)
-	// Output:
-	// abcd
-	// eXgh
 }
 
 func Example_insert() {

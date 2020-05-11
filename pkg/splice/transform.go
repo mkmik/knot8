@@ -8,16 +8,42 @@ import (
 	"bytes"
 	"io"
 	"sort"
+
+	"golang.org/x/text/transform"
 )
 
-type replacer struct {
-	ext  extent
-	repl func(prev, context string) (string, error)
+type Transformer struct {
+	buf  []byte
+	copy func(w io.Writer, r io.Reader) error
 }
 
-type extent struct {
-	Start int
-	End   int
+func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+	if t.buf != nil {
+		if len(dst) < len(t.buf) {
+			return 0, 0, transform.ErrShortDst
+		}
+		copy(dst, t.buf)
+		return len(t.buf), len(src), nil
+	}
+	if !atEOF {
+		return 0, 0, transform.ErrShortSrc
+	}
+
+	var buf bytes.Buffer
+	if err := t.copy(&buf, bytes.NewReader(src)); err != nil {
+		return 0, 0, err
+	}
+
+	t.buf = buf.Bytes()
+	if len(dst) < len(t.buf) {
+		return 0, 0, transform.ErrShortDst
+	}
+	copy(dst, t.buf)
+	return len(t.buf), len(src), nil
+}
+
+func (t *Transformer) Reset() {
+	t.buf = nil
 }
 
 // splice copies text from r to w while replacing text at given rune extents,

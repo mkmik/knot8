@@ -17,53 +17,16 @@ The edit operation involves one single pass through the input.
 package splice
 
 import (
-	"bytes"
 	"io"
 	"io/ioutil"
 
 	"golang.org/x/text/transform"
 )
 
-type Transformer struct {
-	buf  []byte
-	copy func(w io.Writer, r io.Reader) error
-}
-
-func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
-	if t.buf != nil {
-		if len(dst) < len(t.buf) {
-			return 0, 0, transform.ErrShortDst
-		}
-		copy(dst, t.buf)
-		return len(t.buf), len(src), nil
+func T(ops ...Op) *Transformer {
+	return &Transformer{
+		copy: func(w io.Writer, r io.Reader) error { return splice(w, r, ops...) },
 	}
-	if !atEOF {
-		return 0, 0, transform.ErrShortSrc
-	}
-
-	var buf bytes.Buffer
-	if err := t.copy(&buf, bytes.NewReader(src)); err != nil {
-		return 0, 0, err
-	}
-
-	t.buf = buf.Bytes()
-	if len(dst) < len(t.buf) {
-		return 0, 0, transform.ErrShortDst
-	}
-	copy(dst, t.buf)
-	return len(t.buf), len(src), nil
-}
-
-func (t *Transformer) Reset() {
-	t.buf = nil
-}
-
-func T(ops ...Op) *Transformer { return &Transformer{copy: Ops(ops).Transform} }
-
-type Ops []Op
-
-func (t Ops) Transform(w io.Writer, r io.Reader) error {
-	return splice(w, r, t...)
 }
 
 // A Op captures a request to replace a selection with a replacement string.

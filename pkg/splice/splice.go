@@ -23,6 +23,9 @@ import (
 	"golang.org/x/text/transform"
 )
 
+// Constructs a splice transformer given one or more operations.
+// A splice transformer implements golang.org/x/text/transform.Transform;
+// that package contains many useful functions to apply the transformation.
 func T(ops ...Op) *Transformer {
 	return &Transformer{
 		copy: func(w io.Writer, r io.Reader) error { return splice(w, r, ops...) },

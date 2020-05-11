@@ -12,6 +12,9 @@ import (
 	"golang.org/x/text/transform"
 )
 
+// Transformer is a crazy inefficient implementation of the splice transformer
+// that first reads the whole input in a buffer, and then performs one transformation
+// pass using the old splice(w io.Writer, r io.Reader, reps ...Op) API.
 type Transformer struct {
 	buf  []byte
 	copy func(w io.Writer, r io.Reader) error

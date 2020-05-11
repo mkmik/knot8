@@ -148,6 +148,15 @@ func TestOps(t *testing.T) {
 		{"abcd", "^abcd", rep(splice.Span(0, 0).With("^"))},
 		{"abcd", "", rep(splice.Span(0, 4).With(""))},
 		{"", "abcd", rep(splice.Span(0, 0).With("abcd"))},
+		{
+			"abcde xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx from xyz",
+			"aBCdE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx from xyz",
+			rep(
+				splice.Span(1, 2).With("B"),
+				splice.Span(2, 3).With("C"),
+				splice.Span(4, 5).With("E"),
+			),
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {

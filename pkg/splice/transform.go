@@ -4,107 +4,85 @@
 package splice
 
 import (
-	"bufio"
 	"bytes"
-	"io"
 	"sort"
+	"unicode/utf8"
 
 	"golang.org/x/text/transform"
 )
 
-// Transformer is a crazy inefficient implementation of the splice transformer
-// that first reads the whole input in a buffer, and then performs one transformation
-// pass using the old splice(w io.Writer, r io.Reader, reps ...Op) API.
+// A Transformer transforms some text applying Ops (Replacements on Selections).
 type Transformer struct {
-	buf  []byte
-	copy func(w io.Writer, r io.Reader) error
+	ops []Op         // replacement operations
+	op  int          // current op
+	off int          // current source offset
+	old bytes.Buffer // old content of the span
 }
 
-func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
-	if t.buf != nil {
-		if len(dst) < len(t.buf) {
-			return 0, 0, transform.ErrShortDst
-		}
-		copy(dst, t.buf)
-		return len(t.buf), len(src), nil
-	}
-	if !atEOF {
-		return 0, 0, transform.ErrShortSrc
-	}
-
-	var buf bytes.Buffer
-	if err := t.copy(&buf, bytes.NewReader(src)); err != nil {
-		return 0, 0, err
-	}
-
-	t.buf = buf.Bytes()
-	if len(dst) < len(t.buf) {
-		return 0, 0, transform.ErrShortDst
-	}
-	copy(dst, t.buf)
-	return len(t.buf), len(src), nil
+func NewTransformer(ops ...Op) *Transformer {
+	sorted := make([]Op, len(ops))
+	copy(sorted, ops)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Start < sorted[j].Start })
+	t := &Transformer{ops: sorted}
+	t.Reset()
+	return t
 }
 
 func (t *Transformer) Reset() {
-	t.buf = nil
+	t.op = 0
+	t.off = 0
+	t.old.Reset()
 }
 
-// splice copies text from r to w while replacing text at given rune extents,
-// as specified by the reps slice. The text to be replaced is provided via a callback
-// function "replace" in the replacer structures.
-func splice(w io.Writer, r io.Reader, reps ...Op) error {
-	wbuf, rbuf := bufio.NewWriter(w), bufio.NewReader(r)
-	defer wbuf.Flush()
+func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+	defer func() {
+		t.off += nSrc
+	}()
 
-	sorted := make([]Op, len(reps))
-	copy(sorted, reps)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Start < sorted[j].Start })
-
-	pos := 0
-	var prev bytes.Buffer
-	for _, rep := range sorted {
-		// Copy out the span until the start of the current extent.
-		if err := copyRunesN(wbuf, rbuf, rep.Start-pos); err != nil {
-			return err
+	inSpan := false
+	for {
+		for t.op < len(t.ops) {
+			op := t.ops[t.op]
+			if t.off+nSrc == op.Start {
+				inSpan = true
+				t.old.Reset()
+			}
+			if t.off+nSrc == op.End {
+				new, err := op.Replace(t.old.String(), "  demo:") // TODO capture context
+				if err != nil {
+					return nDst, nSrc, err
+				}
+				if len(new) > len(dst[nDst:]) {
+					return nDst, nSrc, transform.ErrShortDst
+				}
+				copy(dst[nDst:], []byte(new))
+				nDst += len(new)
+				inSpan = false
+				t.op++
+			} else {
+				break
+			}
+			// there could be new span starting back to back to this span end, hence looping.
+		}
+		// spans can address one past the end of the input, hence we first have to do ^^^
+		// and check whether to exit the loop only here:
+		if nSrc >= len(src) {
+			break
 		}
 
-		// Consume the old content of the extent to be replaced.
-		// Save it into a buffer because the quoting heuristic needs the previous value.
-		if err := copyRunesN(&prev, rbuf, rep.End-rep.Start); err != nil {
-			return err
+		r, size := utf8.DecodeRune(src[nSrc:])
+		if r == utf8.RuneError && !atEOF && !utf8.FullRune(src[nSrc:]) {
+			return nDst, nSrc, transform.ErrShortSrc
 		}
-
-		next, err := rep.Replace(prev.String(), "  demo:") // TODO capture context
-		if err != nil {
-			return err
+		if inSpan {
+			t.old.WriteRune(r)
+		} else {
+			if size > len(dst[nDst:]) {
+				return nDst, nSrc, transform.ErrShortDst
+			}
+			nDst += utf8.EncodeRune(dst[nDst:], r)
 		}
-		if _, err := wbuf.WriteString(next); err != nil {
-			return err
-		}
-		prev.Reset()
-
-		pos = rep.End
+		nSrc += size
 	}
-
-	// Copy out the trailing span.
-	_, err := io.Copy(wbuf, rbuf)
-	return err
-
-}
-
-type runeWriter interface {
-	WriteRune(r rune) (size int, err error)
-}
-
-func copyRunesN(w runeWriter, r io.RuneReader, n int) error {
-	for i := 0; i < n; i++ {
-		ch, _, err := r.ReadRune()
-		if err != nil {
-			return err
-		}
-		if _, err := w.WriteRune(ch); err != nil {
-			return err
-		}
-	}
-	return nil
+	return nDst, nSrc, nil
 }

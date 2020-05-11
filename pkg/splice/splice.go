@@ -26,11 +26,7 @@ import (
 // Constructs a splice transformer given one or more operations.
 // A splice transformer implements golang.org/x/text/transform.Transform;
 // that package contains many useful functions to apply the transformation.
-func T(ops ...Op) *Transformer {
-	return &Transformer{
-		copy: func(w io.Writer, r io.Reader) error { return splice(w, r, ops...) },
-	}
-}
+func T(ops ...Op) *Transformer { return NewTransformer(ops...) }
 
 // A Op captures a request to replace a selection with a replacement string.
 // An idiomatic way to construct an Op instance is to call With or WithFunc on a Selection.

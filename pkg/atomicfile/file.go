@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"knot8.io/pkg/splice/transform"
+	"golang.org/x/text/transform"
 )
 
 // Writer returns a io.WriteCloser that writes data to a temporary file
@@ -79,7 +79,7 @@ func Transform(t transform.Transformer, filename string) error {
 	}
 	defer w.Close()
 
-	if err := t.Transform(w, f); err != nil {
+	if _, err := io.Copy(w, transform.NewReader(f, t)); err != nil {
 		return err
 	}
 	return w.Commit()

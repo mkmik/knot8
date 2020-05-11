@@ -19,16 +19,53 @@ package splice
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
+
+	"golang.org/x/text/transform"
 )
 
-func T(ops ...Op) Transformer { return Transformer(ops) }
+type Transformer struct {
+	buf  []byte
+	copy func(w io.Writer, r io.ReadSeeker) error
+}
 
-type Transformer []Op
+func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+	if t.buf != nil {
+		if len(dst) < len(t.buf) {
+			return 0, 0, transform.ErrShortDst
+		}
+		copy(dst, t.buf)
+		return len(t.buf), len(src), nil
+	}
+	if !atEOF {
+		return 0, 0, transform.ErrShortSrc
+	}
 
-func (t Transformer) Transform(w io.Writer, r io.ReadSeeker) error {
+	var buf bytes.Buffer
+	if err := t.copy(&buf, bytes.NewReader(src)); err != nil {
+		return 0, 0, err
+	}
+
+	t.buf = buf.Bytes()
+	if len(dst) < len(t.buf) {
+		return 0, 0, transform.ErrShortDst
+	}
+	copy(dst, t.buf)
+	return len(t.buf), len(src), nil
+}
+
+func (t *Transformer) Reset() {
+	t.buf = nil
+}
+
+func T(ops ...Op) *Transformer { return &Transformer{copy: Ops(ops).Transform} }
+
+type Ops []Op
+
+func (t Ops) Transform(w io.Writer, r io.ReadSeeker) error {
 	re, err := resolvePositions(r, t)
 	if err != nil {
 		return err
@@ -114,7 +151,8 @@ func Peek(r io.ReadSeeker, sels ...Selection) ([]string, error) {
 			return prev, nil
 		})
 	}
-	if err := T(reps...).Transform(ioutil.Discard, r); err != nil {
+
+	if _, err := io.Copy(ioutil.Discard, transform.NewReader(r, T(reps...))); err != nil {
 		return nil, err
 	}
 	return res, nil

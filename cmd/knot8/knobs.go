@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/mkmik/multierror"
+	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/splice"
-	"knot8.io/pkg/splice/transform"
 	"knot8.io/pkg/yamled"
 	"knot8.io/pkg/yptr"
 )

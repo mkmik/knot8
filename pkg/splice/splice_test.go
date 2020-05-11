@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/text/transform"
 	"knot8.io/pkg/splice"
-	"knot8.io/pkg/splice/atomicfile"
-	"knot8.io/pkg/splice/transform"
+	"knot8.io/pkg/atomicfile"
 )
 
 func ExampleOp() {

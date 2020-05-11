@@ -1,12 +1,13 @@
 package atomicfile
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"testing"
+	"unicode"
+
+	"golang.org/x/text/runes"
 )
 
 func TestWrite(t *testing.T) {
@@ -46,17 +47,6 @@ func TestWrite(t *testing.T) {
 	}
 }
 
-type uppercase struct{}
-
-func (uppercase) Transform(w io.Writer, r io.ReadSeeker) error {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(bytes.ToUpper(b))
-	return err
-}
-
 func TestTransform(t *testing.T) {
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -67,7 +57,7 @@ func TestTransform(t *testing.T) {
 	fmt.Fprintf(tmp, "abcd")
 	tmp.Close()
 
-	if err := Transform(uppercase{}, tmp.Name()); err != nil {
+	if err := Transform(runes.Map(unicode.ToUpper), tmp.Name()); err != nil {
 		t.Fatal(err)
 	}
 

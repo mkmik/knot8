@@ -32,7 +32,7 @@ func T(ops ...Op) *Transformer { return NewTransformer(ops...) }
 // An idiomatic way to construct an Op instance is to call With or WithFunc on a Selection.
 type Op struct {
 	Selection
-	Replace func(prev, context string) (string, error)
+	Replace func(prev string) (string, error)
 }
 
 // A selection selects a range of characters in the input string buffer.
@@ -45,12 +45,12 @@ type Selection struct {
 
 // With returns an operation that captures a replacement of the current selection with a desired replacement string.
 func (s Selection) With(r string) Op {
-	return s.WithFunc(func(string, string) (string, error) { return r, nil })
+	return s.WithFunc(func(string) (string, error) { return r, nil })
 }
 
 // WithFunc returns an operation that will call the f callback on the previous value of the selection
 // and replace the selection with the return value of the callback.
-func (s Selection) WithFunc(f func(prev string, context string) (string, error)) Op {
+func (s Selection) WithFunc(f func(prev string) (string, error)) Op {
 	return Op{s, f}
 }
 
@@ -68,7 +68,7 @@ func Peek(r io.Reader, sels ...Selection) ([]string, error) {
 	)
 	for i, sel := range sels {
 		i := i
-		reps[i] = sel.WithFunc(func(prev, context string) (string, error) {
+		reps[i] = sel.WithFunc(func(prev string) (string, error) {
 			res[i] = prev
 			return prev, nil
 		})

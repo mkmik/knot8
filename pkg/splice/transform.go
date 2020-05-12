@@ -49,7 +49,7 @@ func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, er
 				t.old.Reset()
 			}
 			if t.pos+rpos == op.End {
-				new, err := op.Replace(t.old.String(), "  demo:") // TODO capture context
+				new, err := op.Replace(t.old.String())
 				if err != nil {
 					return nDst, nSrc, err
 				}

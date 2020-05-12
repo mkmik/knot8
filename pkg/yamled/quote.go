@@ -21,12 +21,8 @@ import (
 // just to avoid frustrating the user who intentionally quoted a string that didn't have to be quoted.
 // If the user didn't intentionally quote the string, we're not making the original file style any
 // worse than it already was.
-//
-// TODO: preserve input indentation level
-func quote(value, old, context string) (string, error) {
-	det := len(context) - len(strings.TrimLeft(context, " "))
-	indent := det + 2
-
+func quote(value, old string, indent int) (string, error) {
+	indent += 2
 	if len(old) > 0 {
 		q := old[0]
 		if q == '"' || q == '\'' {
@@ -68,14 +64,36 @@ func yamlString(value string, indent int) (string, error) {
 	if value == "" {
 		return "", nil
 	}
+	if min := 2; indent < min {
+		return "", fmt.Errorf("yamlString indent must be at least %d", min)
+	}
+
 	var buf bytes.Buffer
 	enc := yaml.NewEncoder(&buf)
-	enc.SetIndent(indent)
+	enc.SetIndent(2)
 	if err := enc.Encode(value); err != nil {
 		return "", err
 	}
+
 	s := buf.String()
-	return s[:len(s)-1], nil // strip trailing newline emitted by yaml marshaling.
+	s = s[:len(s)-1] // strip trailing newline emitted by yaml marshaling.
+	return reindent(s, indent-2), nil
+}
+
+// reindent reindents a yaml multiline string by positive indentation delta.
+//
+// For some reason, the go-yaml library artificially limits the indentation to 2-10 range
+// https://github.com/go-yaml/yaml/issues/501
+func reindent(s string, indent int) string {
+	lines := strings.Split(s, "\n")
+	if len(lines) > 2 {
+		for i := 1; i < len(lines); i++ {
+			if len(lines[i]) > 0 {
+				lines[i] = fmt.Sprintf("%s%s", strings.Repeat(" ", indent), lines[i])
+			}
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 func isPrintable(s string) bool {

@@ -10,7 +10,7 @@ import (
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/yamled"
-	"knot8.io/pkg/yptr"
+	yptr "github.com/vmware-labs/yaml-jsonpointer"
 )
 
 func TestEdit(t *testing.T) {

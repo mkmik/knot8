@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/splice"
 	"knot8.io/pkg/yamled"
-	"knot8.io/pkg/yptr"
+	yptr "github.com/vmware-labs/yaml-jsonpointer"
 )
 
 const (

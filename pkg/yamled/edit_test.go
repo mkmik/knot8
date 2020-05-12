@@ -9,7 +9,6 @@ import (
 
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
-	"knot8.io/pkg/splice"
 	"knot8.io/pkg/yamled"
 	"knot8.io/pkg/yptr"
 )
@@ -93,7 +92,7 @@ baz: end
 				t.Fatal(err)
 			}
 
-			buf, _, err = transform.Bytes(splice.T(
+			buf, _, err = transform.Bytes(yamled.T(
 				yamled.Node(foo).With(tc.foo),
 				yamled.Node(bar).With(tc.bar),
 			), []byte(src))

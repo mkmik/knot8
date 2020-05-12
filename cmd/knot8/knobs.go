@@ -82,7 +82,7 @@ type KnobTarget struct {
 	value string
 	ptr   Pointer
 	line  int
-	loc   yamled.Selection
+	loc   splice.Selection
 	raw   string
 }
 
@@ -122,7 +122,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 		}
 
 		loc := yamled.Node(f)
-		raw, err := splice.Peek(p.Manifest.source.reader(), loc.Selection)
+		raw, err := splice.Peek(p.Manifest.source.reader(), loc)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -182,7 +182,7 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if b, _, err := transform.Bytes(splice.T(edits...), f.buf); err != nil {
+		if b, _, err := transform.Bytes(yamled.T(edits...), f.buf); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		} else {
 			f.buf = b

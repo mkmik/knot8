@@ -23,20 +23,21 @@ func Quoted(op splice.Op) splice.Op {
 }
 
 // Node returns a selection that spans over a yaml node.
-func Node(n *yaml.Node) Selection {
+func Node(n *yaml.Node) splice.Selection {
 	// IndexEnd incorrectly includes trailing newline when strings are multiline.
 	// TODO(mkm): remove hack once upstream is patched
 	d := 0
 	if n.Style&(yaml.LiteralStyle|yaml.FoldedStyle) != 0 {
 		d = 1
 	}
-	return Selection{splice.Span(n.Index, n.IndexEnd-d)}
+	return splice.Span(n.Index, n.IndexEnd-d)
 }
 
-type Selection struct {
-	Selection splice.Selection
-}
-
-func (s Selection) With(v string) splice.Op {
-	return Quoted(s.Selection.With(v))
+// T creates a transformer that performs yaml-aware edit operations.
+func T(ops ...splice.Op) *splice.Transformer {
+	qops := make([]splice.Op, len(ops))
+	for i := range ops {
+		qops[i] = Quoted(ops[i])
+	}
+	return splice.T(qops...)
 }

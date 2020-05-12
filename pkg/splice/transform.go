@@ -15,7 +15,7 @@ import (
 type Transformer struct {
 	ops []Op         // replacement operations
 	op  int          // current op
-	off int          // current source offset
+	pos int          // source codepoints consumed by last transform
 	old bytes.Buffer // old content of the span
 }
 
@@ -30,25 +30,25 @@ func NewTransformer(ops ...Op) *Transformer {
 
 func (t *Transformer) Reset() {
 	t.op = 0
-	t.off = 0
+	t.pos = 0
 	t.old.Reset()
 }
 
 func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
-	p := 0
+	rpos := 0 // codepoints consumed in this transform
 	defer func() {
-		t.off += p
+		t.pos += rpos
 	}()
 
 	inSpan := false
 	for {
 		for t.op < len(t.ops) {
 			op := t.ops[t.op]
-			if t.off+p == op.Start {
+			if t.pos+rpos == op.Start {
 				inSpan = true
 				t.old.Reset()
 			}
-			if t.off+p == op.End {
+			if t.pos+rpos == op.End {
 				new, err := op.Replace(t.old.String(), "  demo:") // TODO capture context
 				if err != nil {
 					return nDst, nSrc, err
@@ -84,7 +84,7 @@ func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, er
 			nDst += utf8.EncodeRune(dst[nDst:], r)
 		}
 		nSrc += size
-		p++
+		rpos++
 	}
 	return nDst, nSrc, nil
 }

@@ -36,6 +36,19 @@ func Example() {
 	// aBcd
 }
 
+func Example_unicode() {
+	src := "ábcd"
+
+	res, _, err := transform.String(splice.T(splice.Span(1, 2).With("B")), src)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res)
+
+	// Output:
+	// áBcd
+}
+
 func Example_multiple() {
 	src := "abcd"
 

@@ -35,19 +35,20 @@ func (t *Transformer) Reset() {
 }
 
 func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+	p := 0
 	defer func() {
-		t.off += nSrc
+		t.off += p
 	}()
 
 	inSpan := false
 	for {
 		for t.op < len(t.ops) {
 			op := t.ops[t.op]
-			if t.off+nSrc == op.Start {
+			if t.off+p == op.Start {
 				inSpan = true
 				t.old.Reset()
 			}
-			if t.off+nSrc == op.End {
+			if t.off+p == op.End {
 				new, err := op.Replace(t.old.String(), "  demo:") // TODO capture context
 				if err != nil {
 					return nDst, nSrc, err
@@ -83,6 +84,7 @@ func (t *Transformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, er
 			nDst += utf8.EncodeRune(dst[nDst:], r)
 		}
 		nSrc += size
+		p++
 	}
 	return nDst, nSrc, nil
 }

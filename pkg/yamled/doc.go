@@ -4,10 +4,12 @@
 /*
 Package yamled implements helpers for in-place editing of YAML sources.
 
-The in-place editing itself is delegated to the knot8.io/pkg/splice package.
+The editing is performed by a golang.org/x/text/transform.Transformer implementation
+configured with one or more editing operations.
 
-This package adds functions to derive a splice.Selection from a yaml.Node,
-and a YAML-specific value quoting implementation.
+Editing operations are defined as string replacements over selections covering YAML nodes in the YAML source.
+
+Selections are constructing from *yaml.Node value that can be obtained somehow (e.g. manually or via the YAML JSONPointer or YAML JSONPath libraries).
 
 */
 package yamled

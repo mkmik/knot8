@@ -5,13 +5,54 @@ package yamled_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
+	yptr "github.com/vmware-labs/yaml-jsonpointer"
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/yamled"
-	yptr "github.com/vmware-labs/yaml-jsonpointer"
 )
+
+// ExampleT shows how to use the transformer to edit a YAML source in place.
+// It also shows how the quoting style is preserved
+func ExampleT() {
+	src := `apiVersion: v1
+kind: Service
+metadata:
+  name: "foo"
+  namespace: myns
+`
+
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(src), &root); err != nil {
+		log.Fatal(err)
+	}
+	nameNode, err := yptr.Find(&root, "/metadata/name")
+	if err != nil {
+		log.Fatal(err)
+	}
+	nsNode, err := yptr.Find(&root, "/metadata/namespace")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out, _, err := transform.String(yamled.T(
+		yamled.Node(nameNode).With("bar"),
+		yamled.Node(nsNode).With("otherns"),
+	), src)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(out)
+
+	// Output:
+	// apiVersion: v1
+	// kind: Service
+	// metadata:
+	//   name: "bar"
+	//   namespace: otherns
+}
 
 func TestEdit(t *testing.T) {
 	src := `foo: abc

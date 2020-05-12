@@ -12,7 +12,7 @@ import (
 	"knot8.io/pkg/splice"
 )
 
-// Node returns a selection that spans over a yaml node.
+// Node returns a selection that spans over a YAML node.
 func Node(n *yaml.Node) splice.Selection {
 	// IndexEnd incorrectly includes trailing newline when strings are multiline.
 	// TODO(mkm): remove hack once upstream is patched
@@ -23,7 +23,7 @@ func Node(n *yaml.Node) splice.Selection {
 	return splice.Span(n.Index, n.IndexEnd-d)
 }
 
-// T creates a transformer that performs yaml-aware edit operations.
+// T creates a transformer that performs YAML-aware edit operations.
 func T(ops ...splice.Op) *Transformer {
 	t := &Transformer{}
 	qops := make([]splice.Op, len(ops))
@@ -34,7 +34,7 @@ func T(ops ...splice.Op) *Transformer {
 	return t
 }
 
-// quotedOp transforms a splice.Op into an op that quotes the replacement string according to yaml rules.
+// quotedOp transforms a splice.Op into an op that quotes the replacement string according to YAML rules.
 func quotedOp(op splice.Op, t *Transformer) splice.Op {
 	o := op
 	saved := o.Replace
@@ -50,6 +50,8 @@ func quotedOp(op splice.Op, t *Transformer) splice.Op {
 	return o
 }
 
+// A Transformer implements golang.org/x/text/transform.Transformer and can be used to perform
+// precise in-place edits of yaml nodes in an byte stream.
 type Transformer struct {
 	t          *splice.Transformer
 	linesDone  bool

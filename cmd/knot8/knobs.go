@@ -11,8 +11,8 @@ import (
 	"github.com/mkmik/multierror"
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
-	"knot8.io/pkg/splice"
-	"knot8.io/pkg/yamled"
+	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
+	"github.com/vmware-labs/yaml-jsonpointer/yamled"
 	yptr "github.com/vmware-labs/yaml-jsonpointer"
 )
 

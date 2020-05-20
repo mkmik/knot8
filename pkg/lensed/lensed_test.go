@@ -56,7 +56,7 @@ foo: |
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := Builtin.Apply(src, tc.t)
+			got, err := Default.Apply(src, tc.t)
 			if err != nil {
 				t.Fatal(err)
 			}

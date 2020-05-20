@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	// Builtin is the default map of lenses.
-	Builtin = LensMap{
+	// Default is the default map of lenses.
+	Default = LensMap{
 		"":       YAMLLens{},
 		"yaml":   YAMLLens{},
 		"yamls":  MultiYAMLLens{},
@@ -21,10 +21,10 @@ type Mapping struct {
 	Replacement string
 }
 
-// A Setter is like a mapping but uses a Transformer to update the existing value pointed by the pointer.
+// A Setter is like a mapping but uses a Replacer to update the existing value pointed by the pointer.
 type Setter struct {
 	Pointer string
-	Value   Transformer
+	Value   Replacer
 }
 
 // A Lens knows how to perform in-place edits of parts of a text.
@@ -34,8 +34,8 @@ type Lens interface {
 	Apply(src []byte, m []Setter) ([]byte, error)
 }
 
-// A Transformer transforms a byte slice into another byte slice.
-type Transformer interface {
+// A Replacer transforms a byte slice into another byte slice.
+type Replacer interface {
 	Transform(src []byte) ([]byte, error)
 }
 
@@ -84,7 +84,7 @@ func (lm LensMap) appliedLenses(ms []Mapping) ([]appliedLens, error) {
 			pairs = append(pairs, lensPointer{l, ptr})
 		}
 
-		var value Transformer = leafTransformer([]byte(m.Replacement))
+		var value Replacer = leafReplacer([]byte(m.Replacement))
 		var a appliedLens
 		for i := len(pairs) - 1; i >= 0; i-- {
 			a = appliedLens{pairs[i].lens, []Setter{{pairs[i].pointer, value}}}
@@ -94,6 +94,22 @@ func (lm LensMap) appliedLenses(ms []Mapping) ([]appliedLens, error) {
 	}
 
 	return res, nil
+}
+
+// Replacer returns a Replacer implementation that applies mappings to its input.
+func (lm LensMap) Replacer(ms []Mapping) AppliedLensMap {
+	return AppliedLensMap{lm, ms}
+}
+
+// An AppliedLensMap is a Replacer that applied mappings to its inputs.
+type AppliedLensMap struct {
+	lm LensMap
+	ms []Mapping
+}
+
+// Transform implements the Replacer interface.
+func (a AppliedLensMap) Transform(src []byte) ([]byte, error) {
+	return a.lm.Apply(src, a.ms)
 }
 
 // normalize normalizes pointer expressions.
@@ -149,8 +165,8 @@ func (a appliedLens) Transform(src []byte) ([]byte, error) {
 	return a.lens.Apply(src, a.setters)
 }
 
-type leafTransformer []byte
+type leafReplacer []byte
 
-func (l leafTransformer) Transform(src []byte) ([]byte, error) {
+func (l leafReplacer) Transform(src []byte) ([]byte, error) {
 	return l, nil
 }

@@ -29,7 +29,7 @@ func TestBase64(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			got, err := Builtin.Apply([]byte(tc.src), tc.t)
+			got, err := Default.Apply([]byte(tc.src), tc.t)
 			if err != nil {
 				t.Fatal(err)
 			}

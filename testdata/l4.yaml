@@ -3,11 +3,10 @@ kind: ConfigMap
 metadata:
   name: demo
   annotations:
-    field.knot8.io/foo: /data/bar/~(yaml)/cfg/~(toml)/main/stuff/foo
+    field.knot8.io/foo: /data/bar/~(yaml)/foo
+    field.knot8.io/bar: /data/bar
+    field.knot8.io/baz: /data/baz
 data:
   bar: |
-    cfg: |
-      [main]
-      "stuff".foo =   "x" # comment
-      bar = "y"
+    {"foo": "x", "boh": "bah"}
   baz: quz

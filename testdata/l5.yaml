@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /data/bar/~(yaml)/cfg/~(toml)/main/stuff/foo
+data:
+  bar: |
+    cfg: |
+      [main]
+      "stuff".foo =   "x" # comment
+      bar = "y"
+  baz: quz

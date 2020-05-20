@@ -125,3 +125,23 @@ func TestNormalize(t *testing.T) {
 		})
 	}
 }
+
+func TestGet(t *testing.T) {
+	src := `foo: x
+bar: y`
+
+	r, err := Get([]byte(src), []string{"/foo", "/bar"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := len(r), 2; got != want {
+		t.Errorf("got: %d, want: %d", got, want)
+	}
+	if got, want := string(r[0]), "x"; got != want {
+		t.Errorf("got: %q, want: %q", got, want)
+	}
+	if got, want := string(r[1]), "y"; got != want {
+		t.Errorf("got: %q, want: %q", got, want)
+	}
+}

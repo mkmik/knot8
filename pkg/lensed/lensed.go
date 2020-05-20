@@ -50,11 +50,16 @@ func Apply(src []byte, m []Mapping) ([]byte, error) {
 
 // Apply applies a slice of mappings on a source byte slice, resolving lens names
 // from the lens map.
-func (lm LensMap) Apply(src []byte, m []Mapping) ([]byte, error) {
-	for i := range m {
-		m[i].Pointer = normalize(m[i].Pointer)
+func (lm LensMap) Apply(src []byte, ms []Mapping) ([]byte, error) {
+	var setters []Setter
+	for _, m := range ms {
+		setters = append(setters, Setter{m.Pointer, leafReplacer([]byte(m.Replacement))})
 	}
-	als, err := lm.appliedLenses(m)
+	return lm.ApplySetters(src, setters)
+}
+
+func (lm LensMap) ApplySetters(src []byte, setters []Setter) ([]byte, error) {
+	als, err := lm.appliedLenses(setters)
 	if err != nil {
 		return nil, err
 	}
@@ -65,20 +70,39 @@ func (lm LensMap) Apply(src []byte, m []Mapping) ([]byte, error) {
 			return nil, err
 		}
 	}
-
 	return src, nil
 }
 
-func (lm LensMap) appliedLenses(ms []Mapping) ([]appliedLens, error) {
+// Get invokes Get on the Default lens map.
+func Get(src []byte, ptrs []string) ([][]byte, error) {
+	return Default.Get(src, ptrs)
+}
+
+// Get returns a slice of byte slices, each one containing the value of a field
+// addressed by a pointer.
+func (lm LensMap) Get(src []byte, ptrs []string) ([][]byte, error) {
+	res := make([][]byte, len(ptrs))
+	setters := make([]Setter, len(ptrs))
+	for i, p := range ptrs {
+		setters[i] = Setter{p, captureReplacer{&res[i]}}
+	}
+	_, err := lm.ApplySetters(src, setters)
+	if err != nil {
+		return nil, err
+	}
+	return res, err
+}
+
+func (lm LensMap) appliedLenses(setters []Setter) ([]appliedLens, error) {
 	var res []appliedLens
-	for _, m := range ms {
+	for _, setter := range setters {
 		type lensPointer struct {
 			lens    Lens
 			pointer string
 		}
 
 		var pairs []lensPointer
-		rest := m.Pointer
+		rest := normalize(setter.Pointer)
 		for rest != "" {
 			var (
 				lens, ptr string
@@ -96,10 +120,10 @@ func (lm LensMap) appliedLenses(ms []Mapping) ([]appliedLens, error) {
 			pairs = append(pairs, lensPointer{l, ptr})
 		}
 
-		var value Replacer = leafReplacer([]byte(m.Replacement))
+		var value Replacer = setter.Value
 		var a appliedLens
-		for i := len(pairs) - 1; i >= 0; i-- {
-			a = appliedLens{pairs[i].lens, []Setter{{pairs[i].pointer, value}}}
+		for j := len(pairs) - 1; j >= 0; j-- {
+			a = appliedLens{pairs[j].lens, []Setter{{pairs[j].pointer, value}}}
 			value = a
 		}
 		res = append(res, a)
@@ -179,6 +203,15 @@ func (a appliedLens) Transform(src []byte) ([]byte, error) {
 
 type leafReplacer []byte
 
+func newLeafReplacer(b []byte) Replacer { return leafReplacer(b) }
+
 func (l leafReplacer) Transform(src []byte) ([]byte, error) {
 	return l, nil
+}
+
+type captureReplacer struct{ b *[]byte }
+
+func (c captureReplacer) Transform(src []byte) ([]byte, error) {
+	*c.b = src
+	return src, nil
 }

@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 )
 
-// Base64Lens implements the "bas64" lens.
+// Base64Lens implements the "base64" lens.
 type Base64Lens struct{}
 
 // Apply implements the Lens interface.

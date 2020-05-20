@@ -11,6 +11,7 @@ var (
 		"":       YAMLLens{},
 		"yaml":   YAMLLens{},
 		"yamls":  MultiYAMLLens{},
+		"toml":   TOMLLens{},
 		"base64": Base64Lens{},
 	}
 )

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /data/bar/~(base64)
+data:
+  bar: YmFy

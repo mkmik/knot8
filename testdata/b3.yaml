@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bettername
+  annotations:
+    field.knot8.io/foo: /data/fu/~(toml)/foo
+    field.knot8.io/bar: /data/ba
+    knot8.io/original: |
+      foo: miau
+      bar: "42"
+data:
+  fu: |
+    foo = "miau"
+  ba: "42"

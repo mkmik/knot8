@@ -10,8 +10,6 @@ import (
 
 	"github.com/mkmik/multierror"
 	yptr "github.com/vmware-labs/yaml-jsonpointer"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/lensed"
 )
@@ -81,9 +79,6 @@ func (ks Knobs) Names() []string {
 type KnobTarget struct {
 	value string
 	ptr   Pointer
-	line  int
-	loc   splice.Selection
-	raw   string
 }
 
 func checkKnobValues(values []KnobTarget) bool {
@@ -115,24 +110,13 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 		res  []KnobTarget
 	)
 	for _, p := range k.Pointers {
-		// TODO redesign the get API to work with lenses
-		if strings.Contains(p.Expr, "/~(") {
-			continue
-		}
-
-		f, err := p.findNode()
+		r, err := lensed.Get(p.Manifest.source.file.buf, []string{p.Expr})
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
-
-		loc := yamled.Node(f)
-		raw, err := splice.Peek(p.Manifest.source.reader(), loc)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		res = append(res, KnobTarget{f.Value, p, f.Line, loc, raw[0]})
+		v := string(r[0])
+		res = append(res, KnobTarget{ptr: p, value: v})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)

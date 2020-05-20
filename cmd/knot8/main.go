@@ -209,25 +209,12 @@ func (s *GetCmd) Run(ctx *Context) error {
 	return nil
 }
 
-// renderKnobTarget reads a knob value from the source stream and reformats it so it displays nicely
-// in the get command output. It preserves the value formatting from the source yaml but re-indents it
-// and drops the comment from the source.
+// renderKnobTarget reads a knob value from the source stream and formats it.
 func renderKnobTarget(k KnobTarget) (string, error) {
 	file := k.ptr.Manifest.source.file
 	filename := file.name
 
-	v := k.raw
-	c := strings.SplitN(v, "\n", 2)
-	if len(c) == 2 {
-		style, body := c[0], c[1]
-		i := strings.Index(style, "#")
-		if i > 0 {
-			style = style[0:i]
-		}
-		v = fmt.Sprintf("%s\n%s", style, reindent(body, 2))
-	}
-
-	return fmt.Sprintf("%s:%d: %s", filename, k.line, v), nil
+	return fmt.Sprintf("%s: %s", filename, k.value), nil
 }
 
 type DiffCmd struct {

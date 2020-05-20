@@ -203,8 +203,6 @@ func (a appliedLens) Transform(src []byte) ([]byte, error) {
 
 type leafReplacer []byte
 
-func newLeafReplacer(b []byte) Replacer { return leafReplacer(b) }
-
 func (l leafReplacer) Transform(src []byte) ([]byte, error) {
 	return l, nil
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/mkmik/multierror"
-	yptr "github.com/vmware-labs/yaml-jsonpointer"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/lensed"
 )
@@ -27,14 +26,6 @@ type Knob struct {
 type Pointer struct {
 	Expr     string
 	Manifest *Manifest
-}
-
-func (p Pointer) findNode() (*yaml.Node, error) {
-	n, err := yptr.Find(&p.Manifest.raw, p.Expr)
-	if n.Kind != yaml.ScalarNode {
-		return nil, fmt.Errorf("only scalar nodes are supported, found: %s", n.ShortTag())
-	}
-	return n, err
 }
 
 type Knobs map[string]Knob

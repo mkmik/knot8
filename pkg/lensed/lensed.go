@@ -79,8 +79,14 @@ func (lm LensMap) appliedLenses(ms []Mapping) ([]appliedLens, error) {
 		var pairs []lensPointer
 		rest := m.Pointer
 		for rest != "" {
-			var lens, ptr string
-			lens, ptr, rest = split(rest)
+			var (
+				lens, ptr string
+				err       error
+			)
+			lens, ptr, rest, err = split(rest)
+			if err != nil {
+				return nil, err
+			}
 			l, ok := lm[lens]
 			if !ok {
 				return nil, fmt.Errorf("lens %q not defined", lens)
@@ -140,25 +146,25 @@ func isLens(s string) (string, bool) {
 	return s, false
 }
 
-func split(src string) (lens string, pointer string, rest string) {
+func split(src string) (lens string, pointer string, rest string, err error) {
 	if src == "" {
-		return "", "", ""
+		return "", "", "", nil
 	}
 	c := strings.Split(src, "/")
 	lens, ok := isLens(c[0])
 	if !ok {
-		panic(fmt.Errorf("broken promise, %q doesn't start with a lens", src))
+		return "", "", "", fmt.Errorf("broken promise, %q doesn't start with a lens", src)
 	}
 	for i := 1; i < len(c); i++ {
 		if _, ok := isLens(c[i]); ok {
 			if pointer == "" {
 				pointer = "/"
 			}
-			return lens, pointer, strings.Join(c[i:], "/")
+			return lens, pointer, strings.Join(c[i:], "/"), nil
 		}
 		pointer += "/" + c[i]
 	}
-	return lens, pointer, ""
+	return lens, pointer, "", nil
 }
 
 type appliedLens struct {

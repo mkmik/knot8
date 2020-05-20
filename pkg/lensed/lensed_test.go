@@ -83,8 +83,10 @@ func TestSplit(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			lens, ptr, rest := split(tc.src)
-
+			lens, ptr, rest, err := split(tc.src)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if got, want := lens, tc.lens; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}

@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/mkmik/multierror"
-	"golang.org/x/text/transform"
-	"gopkg.in/yaml.v3"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled"
 	yptr "github.com/vmware-labs/yaml-jsonpointer"
+	"github.com/vmware-labs/yaml-jsonpointer/yamled"
+	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
+	"gopkg.in/yaml.v3"
+	"knot8.io/pkg/lensed"
 )
 
 const (
@@ -115,6 +115,11 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 		res  []KnobTarget
 	)
 	for _, p := range k.Pointers {
+		// TODO redesign the get API to work with lenses
+		if strings.Contains(p.Expr, "/~(") {
+			continue
+		}
+
 		f, err := p.findNode()
 		if err != nil {
 			errs = append(errs, err)
@@ -139,7 +144,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 // and performed in the right order by the Commit method.
 type EditBatch struct {
 	ks    Knobs
-	edits map[*shadowFile][]splice.Op
+	edits map[*shadowFile][]lensed.Mapping
 
 	committed bool
 }
@@ -147,7 +152,7 @@ type EditBatch struct {
 func (ks Knobs) NewEditBatch() EditBatch {
 	return EditBatch{
 		ks:    ks,
-		edits: map[*shadowFile][]splice.Op{},
+		edits: map[*shadowFile][]lensed.Mapping{},
 	}
 }
 
@@ -163,13 +168,8 @@ func (b EditBatch) Set(n, v string) error {
 
 	var errs []error
 	for _, p := range k.Pointers {
-		f, err := p.findNode()
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
 		file := p.Manifest.source.file
-		b.edits[file] = append(b.edits[file], yamled.Node(f).With(v))
+		b.edits[file] = append(b.edits[file], lensed.Mapping{p.Expr, v})
 	}
 	if errs != nil {
 		return multierror.Join(errs)
@@ -182,7 +182,7 @@ func (b EditBatch) Set(n, v string) error {
 func (b EditBatch) Commit() error {
 	var errs []error
 	for f, edits := range b.edits {
-		if b, _, err := transform.Bytes(yamled.T(edits...), f.buf); err != nil {
+		if b, err := lensed.Apply(f.buf, edits); err != nil {
 			errs = append(errs, fmt.Errorf("patching file %q: %w", f, err))
 		} else {
 			f.buf = b

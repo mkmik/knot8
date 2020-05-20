@@ -42,6 +42,11 @@ type Replacer interface {
 // A LensMap is a collection of named lenses.
 type LensMap map[string]Lens
 
+// Apply invokes Apply on the Default lens map.
+func Apply(src []byte, m []Mapping) ([]byte, error) {
+	return Default.Apply(src, m)
+}
+
 // Apply applies a slice of mappings on a source byte slice, resolving lens names
 // from the lens map.
 func (lm LensMap) Apply(src []byte, m []Mapping) ([]byte, error) {

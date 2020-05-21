@@ -192,7 +192,33 @@ TOML support is preliminary, but simple key = "value" lines can addressed.
 The Base64 codec allows editing base64 encoded text bodies (e.g. in Secrets).
 .El
 .Sh EXAMPLES
-.Ss Pull
+.
+.\" Example: Simple workflow
+.
+.Ss Simple workflow
+.
+.Bd -literal -offset indent
+$ wget https://my.app/v1/app.yaml
+$ kubectl apply -f app.yaml
+$ knot8 set -f app.yaml foo=WOOF
+$ kubectl apply -f app.yaml
+$ knot8 pull -f app.yaml https://my.app/v2/app.yaml
+$ kubectl apply -f app.yaml
+.Ed
+.
+.\" Example: Roundtrip
+.
+.Ss Roundtrip
+.
+.Bd -literal -offset indent
+$ kubectl apply -f https://my.app/v1/app.yaml
+$ kubectl get deploy myapp -oyaml | knot8 set foo=WOOF | kubectl apply -f -
+.Ed
+.
+.\" Example: Detailed 3-way merge walkthrough
+.
+.Ss Detailed 3-way merge walkthrough
+.
 Imagine you download an app manifest:
 .Pp
 .Dl $ wget https://my.app/v1/app.yaml

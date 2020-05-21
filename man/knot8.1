@@ -46,14 +46,17 @@ elements by a
 .Sh COMMANDS
 .
 .Bl -inset
-.It Cm set Op Fl f Ar file,...
+.It
+.Bk -words
+.Cm set Op Fl f Ar file,...
 .Bro Ar field=value ...
 |
 .Fl Fl from
 .Ar file,...
 .Brc
+.Ek
 .Bl -tag -width 4n
-.It
+.It \&
 Set a
 .Ar field
 declared in one or more manifests.
@@ -79,16 +82,22 @@ Read values from one or more files. The files can be simple key/value YAML maps
 annotations. In that case, the annotations will be used to locate the values.
 .El
 .El
-.It Cm get Op Fl f Ar file,...
-.Aq Ar field
-.Bl -tag -width 4n
 .It
+.Bk -words
+.Cm get Op Fl f Ar file,...
+.Aq Ar field
+.Ek
+.Bl -tag -width 4n
+.It \&
 Prints the value of field.
 .El
-.It Cm pull Op Fl f Ar file,...
-.Aq Ar upstream
-.Bl -tag -width 4n
 .It
+.Bk -words
+.Cm pull Op Fl f Ar file,...
+.Aq Ar upstream
+.Ek
+.Bl -tag -width 4n
+.It \&
 Pull and merge
 .Ar upstream .
 .Pp
@@ -113,9 +122,8 @@ Print version information and quit.
 .Sh SYNTAX
 .Ss Array addresing
 Arrays in JSONPointer can only be addressed by numeric index:
-.Bd -literal -offset indent
-/spec/template/spec/containers/1/env/3/value
-.Ed
+.Pp
+.Dl /spec/template/spec/containers/1/env/3/value
 .Pp
 Such pointers are hard to read and also brittle since they will be broken as
 soon as the order of the array elements will change.
@@ -128,9 +136,8 @@ names (it must be escaped).
 uses this fact to extend the JSONPointer syntax with the
 .Qq ~{}
 construct:
-.Bd -literal -offset indent
-/spec/template/spec/containers/~{"name":"app"}/env/{"name":"FOO"}/value
-.Ed
+.Pp
+.Dl /spec/template/spec/containers/~{"name":"app"}/env/{"name":"FOO"}/value
 .Pp
 Instead of numerical indices, the user provides an inline
 .Dq query
@@ -167,9 +174,8 @@ yield map the source text into a tree addressable via JSONPointer.
 The pointer is split into
 segments and each segment is used to address one string field. Then, the lens
 for the next segment is applied and the process is repeated:
-.Bd -literal -offset indent
-/a/b/c/~(lens1)/d/e/f/~(lens2)/g/h/~(lens3)/i
-.Ed
+.Pp
+.Dl /a/b/c/~(lens1)/d/e/f/~(lens2)/g/h/~(lens3)/i
 .Pp
 Example:
 .Bd -literal -offset indent
@@ -197,8 +203,14 @@ TOML support is preliminary, but simple key = "value" lines can addressed.
 The Base64 codec allows editing base64 encoded text bodies (e.g. in Secrets).
 .El
 .Sh EXAMPLES
-.Ss Upstream version 1
+.Ss Pull
+Imagine you download an app manifest:
+.Pp
+.Dl $ wget https://my.app/v1/app.yaml
+.Pp
+Let's take a look at the content of that manifest:
 .Bd -literal -offset indent
+$ cat app.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -213,9 +225,15 @@ data:
   foo: meow
   bar: "1"
 .Ed
-.Ss Local edit
+.Pp
+You can edit some of the supported fields manually or via the
+.Sx set
+command:
+.Pp
+.Dl $ knot8 set -f app.yaml foo=WOOF
+.Pp
+We can see how this command affected the manifest file:
 .Bd -literal -offset indent
-$ knot8 set -f app.yaml foo=WOOF
 $ cat app.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -231,7 +249,7 @@ data:
   foo: WOOF
   bar: "1"
 .Ed
-.Ss Upstream Version 2
+Now imagine you want to upgrade to the v2 version of the manifest:
 .Bd -literal -offset indent
 apiVersion: v1
 kind: ConfigMap
@@ -247,9 +265,15 @@ data:
   fu: miau
   ba: "42"
 .Ed
-.Ss Pull (upgrade)
+.Pp
+The
+.Sx pull
+command will download the new version and perform the 3-way merge.
+.Pp
+.Dl $ knot8 pull -f app.yaml https://my.app/v2/app.yaml
+.Pp
+Let's see the result of the merge:
 .Bd -literal -offset indent
-$ knot8 pull -f app.yaml https://my.app/v2/app.yaml
 $ cat app.yaml
 apiVersion: v1
 kind: ConfigMap

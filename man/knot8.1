@@ -45,18 +45,12 @@ elements by a
 .Qq primary key
 .Sh COMMANDS
 .
-.Bl -inset
-.It
-.Bk -words
-.Cm set Op Fl f Ar file,...
-.Bro Ar field=value ...
-|
-.Fl Fl from
-.Ar file,...
-.Brc
-.Ek
-.Bl -tag -width 4n
-.It \&
+.\" Subcommand: set
+.Ss set
+.
+.Nm Cm set Op Fl f Ar file,...
+.Brq Ar field=value ... | Fl Fl from Ar file,...
+.Pp
 Set a
 .Ar field
 declared in one or more manifests.
@@ -81,23 +75,20 @@ Read values from one or more files. The files can be simple key/value YAML maps
 (like YTT values.yaml) or full blown manifests which contain knot8 field
 annotations. In that case, the annotations will be used to locate the values.
 .El
-.El
-.It
-.Bk -words
-.Cm get Op Fl f Ar file,...
+.
+.\" Subcommand: get
+.Ss get
+.Nm Cm get Op Fl f Ar file,...
 .Aq Ar field
-.Ek
-.Bl -tag -width 4n
-.It \&
-Prints the value of field.
-.El
-.It
-.Bk -words
-.Cm pull Op Fl f Ar file,...
+.Pp
+Prints the value of a field.
+.
+.\" Subcommand: pull
+.Ss pull
+.
+.Nm Cm pull Op Fl f Ar file,...
 .Aq Ar upstream
-.Ek
-.Bl -tag -width 4n
-.It \&
+.Pp
 Pull and merge
 .Ar upstream .
 .Pp
@@ -106,8 +97,6 @@ The current manifests (as defined by the
 flags) are replaced by the content of
 .Ar upstream
 after merging the custom field values present in the local manifests.
-.El
-.El
 .Sh OPTIONS
 .Bl -tag -width 4n
 .It Fl f, Fl Fl file

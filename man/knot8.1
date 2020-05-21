@@ -43,6 +43,12 @@ metadata:
 implements an extension of the JSONPointer syntax to allow to address array
 elements by a
 .Qq primary key
+.Pp
+.Nm
+consumes metadata from manifest annotations, which means they can be produced
+by any technique that produces valid manifests, including templating systems like Helm,
+ytt, jsonnet, etc.
+.\" Commands:
 .Sh COMMANDS
 .
 .\" Subcommand: set

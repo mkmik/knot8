@@ -193,7 +193,8 @@ code.Nm {	font-style: normal;
 .Cm {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-.Ar {		font-style: italic;
+.Ar {		font-style: normal;
+        text-decoration: underline;
 		font-weight: normal; }
 .Op {		display: inline; }
 .Ic {		font-style: normal;

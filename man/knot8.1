@@ -47,7 +47,8 @@ elements by a
 .Nm
 consumes metadata from manifest annotations, which means they can be produced
 by any technique that produces valid manifests, including templating systems like Helm,
-ytt, jsonnet, etc.
+ytt, jsonnet, etc. Other tools can be applied downstream to apply further
+customizations and overlays, such as kustomize, ytt, jsonnet, etc.
 .\" Commands:
 .Sh COMMANDS
 .
@@ -210,6 +211,17 @@ $ knot8 set -f app.yaml foo=WOOF
 $ kubectl apply -f app.yaml
 $ knot8 pull -f app.yaml https://my.app/v2/app.yaml
 $ kubectl apply -f app.yaml
+.Ed
+.
+.\" Example: separate values
+.Ss Separate values
+.
+Sometimes you want to be apply different sets of values on the same
+config file and thus the in-place edit approach is not a good fit:
+.Bd -literal -offset indent
+$ cat staging/values.yaml
+foo: WOOF
+$ knot8 set <app.yaml --from=staging/values.yaml | kubectl apply -f
 .Ed
 .
 .\" Example: Roundtrip

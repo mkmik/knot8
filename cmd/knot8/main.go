@@ -20,12 +20,11 @@ type Context struct {
 }
 
 var cli struct {
-	Set  SetCmd  `cmd:"" help:"Set a knob."`
-	Get  GetCmd  `cmd:"" help:"Get the value of knob."`
-	Diff DiffCmd `cmd:"" help:"Show the values different from the original."`
-	Pull PullCmd `cmd:"" help:"Pull and merge a new version from upstream."`
-	Info InfoCmd `cmd:"" help:"Show available knobs."`
-	Lint LintCmd `cmd:"" help:"Check that the manifests follow the knot8 rules."`
+	Set    SetCmd    `cmd:"" help:"Set a knob."`
+	Diff   DiffCmd   `cmd:"" help:"Show the values different from the original."`
+	Pull   PullCmd   `cmd:"" help:"Pull and merge a new version from upstream."`
+	Values ValuesCmd `cmd:"" help:"Show available fields."`
+	Lint   LintCmd   `cmd:"" help:"Check that the manifests follow the knot8 rules."`
 
 	Version kong.VersionFlag `name:"version" help:"Print version information and quit"`
 }
@@ -183,40 +182,6 @@ func parseSimplifiedValues(path string) (map[string]string, error) {
 	return values, nil
 }
 
-type GetCmd struct {
-	CommonFlags
-	Field string `arg:"" help:"Field to get."`
-}
-
-func (s *GetCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths)
-	if err != nil && !isNotUniqueValueError(err) {
-		return err
-	}
-
-	values, err := knobs.GetAll(s.Field)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range values {
-		s, err := renderKnobTarget(v)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%s\n", s)
-	}
-	return nil
-}
-
-// renderKnobTarget reads a knob value from the source stream and formats it.
-func renderKnobTarget(k KnobTarget) (string, error) {
-	file := k.ptr.Manifest.source.file
-	filename := file.name
-
-	return fmt.Sprintf("%s: %s", filename, k.value), nil
-}
-
 type DiffCmd struct {
 	CommonFlags
 }
@@ -304,22 +269,36 @@ func (s *PullCmd) Run(ctx *Context) error {
 	return commit()
 }
 
-type InfoCmd struct {
+type ValuesCmd struct {
 	CommonFlags
+
+	NamesOnly bool `short:"k" help:"Print only field names and not their values."`
 }
 
-func (s *InfoCmd) Run(ctx *Context) error {
+func (s *ValuesCmd) Run(ctx *Context) error {
 	knobs, _, err := openKnobs(s.Paths)
-	if err != nil && !isNotUniqueValueError(err) {
-		return err
+	if s.NamesOnly {
+		if err != nil && !isNotUniqueValueError(err) {
+			return err
+		}
+		for _, n := range knobs.Names() {
+			fmt.Printf("%s\n", n)
+		}
+		return nil
+	} else {
+		if err != nil {
+			return err
+		}
+		values := map[string]string{}
+		for n, k := range knobs {
+			kv, err := k.GetAll()
+			if err != nil {
+				return err
+			}
+			values[n] = kv[0].value
+		}
+		return yaml.NewEncoder(os.Stdout).Encode(&values)
 	}
-
-	fmt.Println("Knobs:")
-	for _, k := range knobs.Names() {
-		fmt.Printf("  %s\n", k)
-	}
-
-	return nil
 }
 
 type LintCmd struct {

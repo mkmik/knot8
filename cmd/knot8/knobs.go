@@ -28,6 +28,10 @@ type Pointer struct {
 	Manifest *Manifest
 }
 
+func (p Pointer) Abs() string {
+	return fmt.Sprintf("~(yamls)/%d%s", p.Manifest.source.streamPos, p.Expr)
+}
+
 type Knobs map[string]Knob
 
 func parseKnobs(manifests []*Manifest) (Knobs, error) {
@@ -101,7 +105,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 		res  []KnobTarget
 	)
 	for _, p := range k.Pointers {
-		r, err := lensed.Get(p.Manifest.source.file.buf, []string{p.Expr})
+		r, err := lensed.Get(p.Manifest.source.file.buf, []string{p.Abs()})
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -144,7 +148,7 @@ func (b EditBatch) Set(n, v string) error {
 	var errs []error
 	for _, p := range k.Pointers {
 		file := p.Manifest.source.file
-		b.edits[file] = append(b.edits[file], lensed.Mapping{p.Expr, v})
+		b.edits[file] = append(b.edits[file], lensed.Mapping{p.Abs(), v})
 	}
 	if errs != nil {
 		return multierror.Join(errs)

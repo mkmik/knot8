@@ -1,14 +1,20 @@
 .Dd $Mdocdate: March 10 2020 $
 .Dt KNOT8 1
 .Os ANY
+.
 .Sh NAME
+.
 .Nm knot8
 .Nd not a Kubernetes package manager! Annotate manifests and expose tunables for in-place editing and merging.
+.
 .Sh SYNOPSIS
+.
 .Nm
 .Ar COMMAND
 .Op Fl options
+.
 .Sh DESCRIPTION
+.
 The
 .Nm
 utility allows the user to perform in-place edits of kubernetes manifest files.
@@ -49,10 +55,11 @@ consumes metadata from manifest annotations, which means they can be produced
 by any technique that produces valid manifests, including templating systems like Helm,
 ytt, jsonnet, etc. Other tools can be applied downstream to apply further
 customizations and overlays, such as kustomize, ytt, jsonnet, etc.
-.\" Commands:
+.
+.
 .Sh COMMANDS
 .
-.\" Subcommand: set
+.\" Subcommand
 .Ss set
 .
 .Nm Ic set Op Fl f Ar file,...
@@ -75,7 +82,8 @@ If
 starts with
 .Qq @
 it's interpeted as filename, whose content is used as
-.Ar value.
+.Ar value .
+.
 .Bl -tag -width 4n
 .It Fl Fl from
 Read values from one or more files. The files can be simple key/value YAML maps
@@ -83,14 +91,25 @@ Read values from one or more files. The files can be simple key/value YAML maps
 annotations. In that case, the annotations will be used to locate the values.
 .El
 .
-.\" Subcommand: get
-.Ss get
-.Nm Ic get Op Fl f Ar file,...
-.Aq Ar field
-.Pp
-Prints the value of a field.
 .
-.\" Subcommand: pull
+.\" Subcommand
+.Ss values
+.
+.Nm Ic values Op Fl f Ar file,...
+.Op Fl k
+.Pp
+.
+Print the fields defined in the selected manifests along with the current value in a format
+suitable for subsequent ingestion with
+.Ic set --from .
+.
+.Bl -tag -width 4n
+.It Fl k , Fl Fl names-only
+Print only the field names and omit the value.
+.El
+.
+.
+.\" Subcommand
 .Ss pull
 .
 .Nm Ic pull Op Fl f Ar file,...
@@ -104,9 +123,12 @@ The current manifests (as defined by the
 flags) are replaced by the content of
 .Ar upstream
 after merging the custom field values present in the local manifests.
+.
+.
 .Sh OPTIONS
+.
 .Bl -tag -width 4n
-.It Fl f, Fl Fl file
+.It Fl f , Fl Fl file
 Path to one or more JSON/YAML manifests. The flag can be repeated and/or
 the filenames can be comma-separated. If omitted, the manifests are read from
 standard input. Each YAML file can contain multiple manifests.
@@ -115,7 +137,10 @@ Show context-sensitive help.
 .It Fl Fl version
 Print version information and quit.
 .El
+.
+.
 .Sh SYNTAX
+.
 .Ss Array addresing
 Arrays in JSONPointer can only be addressed by numeric index:
 .Pp
@@ -144,7 +169,10 @@ at least the same fields as the query object).
 .Pp
 When multiple array element matches, the match is ambiguous and an error is
 returned.
+.
+.
 .Ss Lenses
+.
 Sometimes the tunable fields are not just whole scalar values inside the
 manifest, but nested deeper into a part of a string value. A common example is:
 .Bd -literal -offset indent
@@ -198,10 +226,10 @@ TOML support is preliminary, but simple key = "value" lines can addressed.
 .It base64
 The Base64 codec allows editing base64 encoded text bodies (e.g. in Secrets).
 .El
+.
 .Sh EXAMPLES
 .
-.\" Example: Simple workflow
-.
+.\" Example 1
 .Ss Simple workflow
 .
 .Bd -literal -offset indent
@@ -213,7 +241,8 @@ $ knot8 pull -f app.yaml https://my.app/v2/app.yaml
 $ kubectl apply -f app.yaml
 .Ed
 .
-.\" Example: separate values
+.
+.\" Example 2
 .Ss Separate values
 .
 Sometimes you want to be apply different sets of values on the same
@@ -224,8 +253,8 @@ foo: WOOF
 $ knot8 set <app.yaml --from=staging/values.yaml | kubectl apply -f
 .Ed
 .
-.\" Example: Roundtrip
 .
+.\" Example 3
 .Ss Roundtrip
 .
 .Bd -literal -offset indent
@@ -233,8 +262,8 @@ $ kubectl apply -f https://my.app/v1/app.yaml
 $ kubectl get deploy myapp -oyaml | knot8 set foo=WOOF | kubectl apply -f -
 .Ed
 .
-.\" Example: Detailed 3-way merge walkthrough
 .
+.\" Example 4
 .Ss Detailed 3-way merge walkthrough
 .
 Imagine you download an app manifest:

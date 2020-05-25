@@ -20,10 +20,10 @@ type Context struct {
 }
 
 var cli struct {
-	Set    SetCmd    `cmd:"" help:"Set a knob."`
+	Set    SetCmd    `cmd:"" help:"Set a field value."`
+	Values ValuesCmd `cmd:"" help:"Show available fields."`
 	Diff   DiffCmd   `cmd:"" help:"Show the values different from the original."`
 	Pull   PullCmd   `cmd:"" help:"Pull and merge a new version from upstream."`
-	Values ValuesCmd `cmd:"" help:"Show available fields."`
 	Lint   LintCmd   `cmd:"" help:"Check that the manifests follow the knot8 rules."`
 
 	Version kong.VersionFlag `name:"version" help:"Print version information and quit"`

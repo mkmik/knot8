@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/pelletier/go-toml"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
+	"github.com/vmware-labs/go-yaml-edit/splice"
 	"golang.org/x/text/transform"
 )
 

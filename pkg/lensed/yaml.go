@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vmware-labs/go-yaml-edit"
+	"github.com/vmware-labs/go-yaml-edit/splice"
 	yptr "github.com/vmware-labs/yaml-jsonpointer"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled"
-	"github.com/vmware-labs/yaml-jsonpointer/yamled/splice"
 	"golang.org/x/text/transform"
 	"gopkg.in/yaml.v3"
 )

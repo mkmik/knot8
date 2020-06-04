@@ -25,6 +25,20 @@ func TestBase64(t *testing.T) {
 			},
 			`foo: Zm9vOiBBCmJhcjogYgo=`,
 		},
+		{
+			`foo: ""`,
+			[]Mapping{
+				{"/foo/~(base64)", "baz"},
+			},
+			`foo: "YmF6"`,
+		},
+		{
+			`foo: ''`,
+			[]Mapping{
+				{"/foo/~(base64)", "baz"},
+			},
+			`foo: 'YmF6'`,
+		},
 	}
 
 	for i, tc := range testCases {

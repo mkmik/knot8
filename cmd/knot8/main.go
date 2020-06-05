@@ -272,23 +272,29 @@ func (s *PullCmd) Run(ctx *Context) error {
 type ValuesCmd struct {
 	CommonFlags
 
-	NamesOnly bool `short:"k" help:"Print only field names and not their values."`
+	NamesOnly bool   `short:"k" help:"Print only field names and not their values."`
+	Field     string `arg:"" optional:"" help:"Print the value of one specific field"`
 }
 
 func (s *ValuesCmd) Run(ctx *Context) error {
 	knobs, _, err := openKnobs(s.Paths)
+	if err != nil && !(isNotUniqueValueError(err) && (s.NamesOnly || s.Field != "")) {
+		return err
+	}
+
 	if s.NamesOnly {
-		if err != nil && !isNotUniqueValueError(err) {
-			return err
-		}
 		for _, n := range knobs.Names() {
 			fmt.Printf("%s\n", n)
 		}
 		return nil
-	} else {
+	} else if s.Field != "" {
+		v, err := knobs.GetValue(s.Field)
 		if err != nil {
 			return err
 		}
+		fmt.Println(v)
+		return nil
+	} else {
 		values := map[string]string{}
 		for n, k := range knobs {
 			kv, err := k.GetAll()

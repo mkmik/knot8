@@ -46,6 +46,7 @@ github.com/google/martian v2.1.0+incompatible h1:/CP5g8u/VJHijgedC/Legn3BAbAaWPg
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/pprof v0.0.0-20190515194954-54271f7e092f/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
+github.com/google/renameio v0.1.0 h1:GOZbcHa3HfsPKPlmyPyN2KEohoMXOhdMbHrvbpl2QaA=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5 h1:sjZBwGj9Jlw33ImPtvFviGYvseOtDM7hkSKB7+Tv3SM=
@@ -81,6 +82,7 @@ github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnG
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/go-testing-interface v1.0.0 h1:fzU/JVNcaqHQEcVFAKeR41fkiLdIPrefOvVG1VZ96U0=
 github.com/mitchellh/go-testing-interface v1.0.0/go.mod h1:kRemZodwjscx+RGhAo8eIhFbs2+BFgRtFPeD/KE+zxI=
+github.com/mkmik/filetransformer v0.1.0 h1:J5wzpkNGQ2b3LVv7pFjl4mBvYHkiDfIm2qYFxUlNvgs=
 github.com/mkmik/filetransformer v0.1.0/go.mod h1:xMdmMwoBNGIIiOmilq8RPhAVpENKJLoV7MxECjwzV/k=
 github.com/mkmik/multierror v0.3.0 h1:FHr3n5BEVlzlTz8GRbuwimkL2zbdD2gTPcSh0wpRpUg=
 github.com/mkmik/multierror v0.3.0/go.mod h1:wjBYXRpDhh+8mIp+iLBOq0kZ3Y4ICTncojwvP8LUYLQ=
@@ -97,12 +99,10 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/ulikunitz/xz v0.5.5 h1:pFrO0lVpTBXLpYw+pnLj6TbvHuyjXMfjGeCwSqCVwok=
 github.com/ulikunitz/xz v0.5.5/go.mod h1:2bypXElzHzzJZwzH67Y6wb67pO62Rzfn7BSiF4ABRW8=
-github.com/vmware-labs/go-yaml-edit v0.1.4 h1:k0LlIT7shFp5bUY1q+AUoO1FjI1wGheAzvO0/SxeNrc=
-github.com/vmware-labs/go-yaml-edit v0.1.4/go.mod h1:7xpZdQ4Y1V+AZtJRw2bH4R8+4Id9zj0DBXDmV26LzJg=
+github.com/vmware-labs/go-yaml-edit v0.2.1 h1:8TxdDATRnnG+0ALk1SEqk6PInmw34bxwHVoQBvs2HvQ=
+github.com/vmware-labs/go-yaml-edit v0.2.1/go.mod h1:i1snH1VfQ0wYok9WjH2nZct3e0KMqT9YqRfR9bWhTsI=
 github.com/vmware-labs/yaml-jsonpointer v0.1.0 h1:NH8aPX9cPqzI+3ti6L2QyMPl5Wy294G/BrtND0moyZ4=
 github.com/vmware-labs/yaml-jsonpointer v0.1.0/go.mod h1:JDtZ8Hd3hkVzyCAoBXxOSfP9aVfUMAG9OSPfgQTvCQk=
-github.com/vmware-labs/yaml-jsonpointer/yamled v0.1.3 h1:R1b9hUq44WTLVQlxtfzvTnwRH6t+8u+YgYoTgC8z01M=
-github.com/vmware-labs/yaml-jsonpointer/yamled v0.1.3/go.mod h1:HtEB6G1w1fknLqbG6L3HBNo9pqmbZ2fy87YADI5jn0E=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0 h1:C9hSCOW830chIVkdja34wa6Ky+IzWllkUinR+BtRZd4=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=

@@ -9,9 +9,8 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.8.0
-	github.com/vmware-labs/go-yaml-edit v0.1.4
+	github.com/vmware-labs/go-yaml-edit v0.2.1
 	github.com/vmware-labs/yaml-jsonpointer v0.1.0
-	github.com/vmware-labs/yaml-jsonpointer/yamled v0.1.3
 	golang.org/x/text v0.3.2
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )

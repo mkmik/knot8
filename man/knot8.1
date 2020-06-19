@@ -89,6 +89,10 @@ it's interpeted as filename, whose content is used as
 Read values from one or more files. The files can be simple key/value YAML maps
 (like YTT values.yaml) or full blown manifests which contain knot8 field
 annotations. In that case, the annotations will be used to locate the values.
+.
+.It Fl Fl freeze
+Update the knot8.io/orig annotation with a snapshot of the current field values.
+This should be used when maintaining a manifest for publishing.
 .El
 .
 .

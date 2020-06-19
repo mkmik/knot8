@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/go-getter"
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
+	"knot8.io/pkg/lensed"
 )
 
 type Context struct {
@@ -63,6 +64,7 @@ type SetCmd struct {
 	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value or field=@filename, where a leading @ can be escaped with a backslash."`
 	From   []string `name:"from" type:"file" help:"Read values from one or more files. The values will be read from not8 annotated k8s resources."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
+	Freeze bool     `name:"freeze" help:"Save current values to knot8.io/original."`
 }
 
 func (s *SetCmd) Run(ctx *Context) error {
@@ -92,6 +94,12 @@ func (s *SetCmd) Run(ctx *Context) error {
 	}
 	if err := batch.Commit(); err != nil {
 		return err
+	}
+
+	if s.Freeze {
+		if err := freeze(knobs); err != nil {
+			return err
+		}
 	}
 
 	switch s.Format {
@@ -217,6 +225,45 @@ func diff(knobs map[string]Knob) (map[string]string, error) {
 	return dirty, nil
 }
 
+func freeze(knobs map[string]Knob) error {
+	ms := allManifests(knobs)
+	for _, m := range ms {
+		if _, ok := m.Metadata.Annotations[originalAnno]; ok {
+			updateOriginalAnno(m.source.file, knobs)
+		}
+	}
+	return nil
+}
+
+func updateOriginalAnno(f *shadowFile, knobs map[string]Knob) error {
+	path := fmt.Sprintf("/metadata/annotations/%s", strings.ReplaceAll(originalAnno, "/", "~1"))
+	body, err := renderOriginalAnnoBody(knobs)
+	if err != nil {
+		return err
+	}
+	edits := []lensed.Mapping{
+		{path, string(body)},
+	}
+	b, err := lensed.Apply(f.buf, edits)
+	if err != nil {
+		return err
+	}
+	f.buf = b
+	return nil
+}
+
+func renderOriginalAnnoBody(knobs map[string]Knob) ([]byte, error) {
+	values := map[string]string{}
+	for n, k := range knobs {
+		kv, err := k.GetAll()
+		if err != nil {
+			return nil, err
+		}
+		values[n] = kv[0].value
+	}
+	return yaml.Marshal(&values)
+}
+
 type PullCmd struct {
 	CommonFlags
 	Upstream string `arg:"" help:"Upstream file/URL." type:"file"`
@@ -295,15 +342,12 @@ func (s *ValuesCmd) Run(ctx *Context) error {
 		fmt.Println(v)
 		return nil
 	} else {
-		values := map[string]string{}
-		for n, k := range knobs {
-			kv, err := k.GetAll()
-			if err != nil {
-				return err
-			}
-			values[n] = kv[0].value
+		b, err := renderOriginalAnnoBody(knobs)
+		if err != nil {
+			return err
 		}
-		return yaml.NewEncoder(os.Stdout).Encode(&values)
+		_, err = os.Stdout.Write(b)
+		return err
 	}
 }
 

@@ -103,6 +103,8 @@ github.com/vmware-labs/go-yaml-edit v0.2.1 h1:8TxdDATRnnG+0ALk1SEqk6PInmw34bxwHV
 github.com/vmware-labs/go-yaml-edit v0.2.1/go.mod h1:i1snH1VfQ0wYok9WjH2nZct3e0KMqT9YqRfR9bWhTsI=
 github.com/vmware-labs/yaml-jsonpointer v0.1.0 h1:NH8aPX9cPqzI+3ti6L2QyMPl5Wy294G/BrtND0moyZ4=
 github.com/vmware-labs/yaml-jsonpointer v0.1.0/go.mod h1:JDtZ8Hd3hkVzyCAoBXxOSfP9aVfUMAG9OSPfgQTvCQk=
+github.com/vmware-labs/yaml-jsonpointer v0.1.1 h1:gO9fa7NgCEGUM/+MhpHlrmh3kNTMzFTmoeBmWSagLz0=
+github.com/vmware-labs/yaml-jsonpointer v0.1.1/go.mod h1:JDtZ8Hd3hkVzyCAoBXxOSfP9aVfUMAG9OSPfgQTvCQk=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0 h1:C9hSCOW830chIVkdja34wa6Ky+IzWllkUinR+BtRZd4=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=

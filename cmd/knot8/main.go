@@ -441,8 +441,9 @@ func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error,
 			return nil, nil, err
 		}
 		ext.Rebase(manifests)
-		// TODO: merge with internal schema
-		knobs = ext
+		if true {
+			knobs.MergeSchema(ext)
+		}
 	}
 
 	err = checkKnobs(knobs)

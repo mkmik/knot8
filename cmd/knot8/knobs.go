@@ -89,6 +89,25 @@ func (ks Knobs) Rebase(dst Manifests) {
 	}
 }
 
+// MergeSchema merges the field definitions from other into the receiver.
+func (ks Knobs) MergeSchema(other Knobs) {
+	for n := range other {
+		k := ks[n]
+
+		ptrs := map[Pointer]struct{}{}
+		for _, p := range k.Pointers {
+			ptrs[p] = struct{}{}
+		}
+		for _, p := range other[n].Pointers {
+			if _, found := ptrs[p]; !found {
+				k.Pointers = append(k.Pointers, p)
+			}
+		}
+
+		ks[n] = k
+	}
+}
+
 type KnobTarget struct {
 	value string
 	ptr   Pointer

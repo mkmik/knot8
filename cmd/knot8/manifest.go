@@ -64,6 +64,11 @@ func parseManifests(f *shadowFile) (Manifests, error) {
 		if err := m.raw.Decode(&m); err != nil {
 			return nil, err
 		}
+		// Skip YAML files that are not K8s manifests.
+		if m.APIVersion == "" && m.Kind == "" {
+			continue
+		}
+
 		m.source = manifestSource{
 			file:      f,
 			streamPos: i,

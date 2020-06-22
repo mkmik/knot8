@@ -22,6 +22,7 @@ type Context struct {
 
 var cli struct {
 	Set    SetCmd    `cmd:"" help:"Set a field value."`
+	Cat    CatCmd    `cmd:"" help:"Like set but always output to stdout"`
 	Values ValuesCmd `cmd:"" help:"Show available fields."`
 	Diff   DiffCmd   `cmd:"" help:"Show the values different from the original."`
 	Pull   PullCmd   `cmd:"" help:"Pull and merge a new version from upstream."`
@@ -73,6 +74,15 @@ func (s *Setter) UnmarshalText(in []byte) error {
 	return nil
 }
 
+type CatCmd struct {
+	SetCmd
+}
+
+func (c *CatCmd) Run(ctx *Context) error {
+	c.Stdout = true
+	return c.SetCmd.Run(ctx)
+}
+
 type SetCmd struct {
 	CommonFlags
 	CommonSchemaFlags
@@ -81,6 +91,7 @@ type SetCmd struct {
 	From   []string `name:"from" type:"file" help:"Read values from one or more files."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 	Freeze bool     `name:"freeze" help:"Save current values to knot8.io/original."`
+	Stdout bool     `name:"stdout" help:"Output to stdout and never update files in-place"`
 }
 
 func (s *SetCmd) Run(ctx *Context) error {
@@ -94,6 +105,16 @@ func (s *SetCmd) Run(ctx *Context) error {
 	knobs, commit, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
+	}
+
+	// if outputing to stdout instead of inline (either via --stdout, or because of the cat command),
+	// rename all filenames to "-" causing them to be treated as stdio upon commit.
+	if s.Stdout {
+		for _, k := range knobs {
+			for _, p := range k.Pointers {
+				p.Manifest.source.file.name = "-"
+			}
+		}
 	}
 
 	values := s.Values

@@ -38,6 +38,16 @@ type CommonSchemaFlags struct {
 	Schema string `name:"schema" help:"File containing field definitions. Used to augment the field definitions present inline in the resource annotations. The file format mirrors the format of real K8s resources, but shall only contain apiVersion,kind,metadata name, namespace and field annotations."`
 }
 
+func (c *CommonSchemaFlags) BeforeApply() error {
+	if fn := "Knot8"; c.Schema == "" {
+		_, err := os.Stat(fn)
+		if err == nil {
+			c.Schema = fn
+		}
+	}
+	return nil
+}
+
 type Setter struct {
 	Field string
 	Value string

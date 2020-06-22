@@ -1,5 +1,4 @@
 appName: "foo"
-replicas: "3"
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -468,10 +468,10 @@ func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error,
 		if err != nil {
 			return nil, nil, err
 		}
-		ext.Rebase(manifests)
-		if true {
-			knobs.MergeSchema(ext)
+		if err := ext.Rebase(manifests); err != nil {
+			return nil, nil, err
 		}
+		knobs.MergeSchema(ext)
 	}
 
 	err = checkKnobs(knobs)

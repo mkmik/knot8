@@ -73,20 +73,29 @@ func (ks Knobs) Names() []string {
 
 // Rebase updates the manifest pointer inside each Pointer value
 // so that it points to the manifest for the matching resource (namespace+name)
-func (ks Knobs) Rebase(dst Manifests) {
+func (ks Knobs) Rebase(dst Manifests) error {
 	nn := map[FQN]*Manifest{}
 	for _, m := range dst {
 		nn[m.FQN()] = m
 	}
+	var errs []error
 	for n := range ks {
 		for i, p := range ks[n].Pointers {
-			if d, found := nn[p.Manifest.FQN()]; found {
-				u := ks[n]
-				u.Pointers[i].Manifest = d
-				ks[n] = u
+			r := p.Manifest.FQN()
+			d, found := nn[r]
+			if !found {
+				errs = append(errs, fmt.Errorf("cannot find resource %s", r))
+				continue
 			}
+			u := ks[n]
+			u.Pointers[i].Manifest = d
+			ks[n] = u
 		}
 	}
+	if errs != nil {
+		return multierror.Join(errs)
+	}
+	return nil
 }
 
 // MergeSchema merges the field definitions from other into the receiver.

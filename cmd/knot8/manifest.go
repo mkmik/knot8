@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 
 	"github.com/mkmik/multierror"
@@ -42,6 +43,11 @@ type NamespacedName struct {
 type FQN struct {
 	VersionKind
 	NamespacedName
+}
+
+func (f FQN) String() string {
+	b, _ := json.Marshal(f)
+	return string(b)
 }
 
 type manifestSource struct {

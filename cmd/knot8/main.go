@@ -17,6 +17,10 @@ import (
 	"knot8.io/pkg/lensed"
 )
 
+const (
+	Knot8file = "Knot8file"
+)
+
 type Context struct {
 }
 
@@ -40,10 +44,10 @@ type CommonSchemaFlags struct {
 }
 
 func (c *CommonSchemaFlags) AfterApply() error {
-	if fn := "Knot8file"; c.Schema == "" {
-		_, err := os.Stat(fn)
+	if c.Schema == "" {
+		_, err := os.Stat(Knot8file)
 		if err == nil {
-			c.Schema = fn
+			c.Schema = Knot8file
 		}
 	}
 	return nil
@@ -95,11 +99,10 @@ type SetCmd struct {
 }
 
 func (s *SetCmd) Run(ctx *Context) error {
-	if fn := "Knot8file"; len(s.From) == 0 {
-		_, err := os.Stat(fn)
-		if err == nil {
-			s.From = []string{fn}
-		}
+	// if Knot8file exists, use it as a source of default values.
+	_, err := os.Stat(Knot8file)
+	if err == nil {
+		s.From = append([]string{Knot8file}, s.From...)
 	}
 
 	knobs, manifests, err := openKnobs(s.Paths, s.Schema)
@@ -168,11 +171,7 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 			continue
 		}
 		for k, v := range values {
-			if old, ok := all[k]; ok && old != v {
-				errs = append(errs, errNotUniqueValue{fmt.Errorf("value in field %q is not unique", k)})
-			} else {
-				all[k] = v
-			}
+			all[k] = v
 		}
 	}
 	if errs != nil {

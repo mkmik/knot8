@@ -68,7 +68,7 @@ type SetCmd struct {
 	CommonSchemaFlags
 
 	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value or field=@filename, where a leading @ can be escaped with a backslash."`
-	From   []string `name:"from" type:"file" help:"Read values from one or more files. The values will be read from not8 annotated k8s resources."`
+	From   []string `name:"from" type:"file" help:"Read values from one or more files."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 	Freeze bool     `name:"freeze" help:"Save current values to knot8.io/original."`
 }
@@ -120,34 +120,6 @@ func (s *SetCmd) Run(ctx *Context) error {
 }
 
 func settersFromFiles(paths []string) ([]Setter, error) {
-	knobs, _, err := openKnobs(paths, "")
-	if err != nil {
-		return nil, err
-	}
-
-	if err := checkKnobs(knobs); err != nil {
-		return nil, err
-	}
-
-	var res []Setter
-	for _, n := range knobs.Names() {
-		values, err := knobs.GetAll(n)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, Setter{n, values[0].value})
-	}
-
-	simple, err := openSimplifiedValues(paths)
-	if err != nil {
-		return nil, err
-	}
-	res = append(res, simple...)
-
-	return res, nil
-}
-
-func openSimplifiedValues(paths []string) ([]Setter, error) {
 	var (
 		res  []Setter
 		errs []error

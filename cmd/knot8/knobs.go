@@ -195,5 +195,5 @@ func findOriginal(knobs Knobs) (map[string]string, error) {
 			return res, nil
 		}
 	}
-	return nil, fmt.Errorf("cannot find %s annotation", originalAnno)
+	return map[string]string{}, nil
 }

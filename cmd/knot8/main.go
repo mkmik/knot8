@@ -39,7 +39,7 @@ type CommonSchemaFlags struct {
 }
 
 func (c *CommonSchemaFlags) BeforeApply() error {
-	if fn := "Knot8"; c.Schema == "" {
+	if fn := "Knot8file"; c.Schema == "" {
 		_, err := os.Stat(fn)
 		if err == nil {
 			c.Schema = fn

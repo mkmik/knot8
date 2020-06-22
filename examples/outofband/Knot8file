@@ -1,0 +1,10 @@
+appName: "foo"
+replicas: "3"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  annotations:
+    field.knot8.io/appName: /metadata/name
+    field.knot8.io/replicas: /spec/replicas

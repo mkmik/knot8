@@ -102,7 +102,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		}
 	}
 
-	knobs, commit, err := openKnobs(s.Paths, s.Schema)
+	knobs, manifests, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -110,10 +110,8 @@ func (s *SetCmd) Run(ctx *Context) error {
 	// if outputing to stdout instead of inline (either via --stdout, or because of the cat command),
 	// rename all filenames to "-" causing them to be treated as stdio upon commit.
 	if s.Stdout {
-		for _, k := range knobs {
-			for _, p := range k.Pointers {
-				p.Manifest.source.file.name = "-"
-			}
+		for _, m := range manifests {
+			m.source.file.name = "-"
 		}
 	}
 
@@ -148,7 +146,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 
 	switch s.Format {
 	case "":
-		if err := commit(); err != nil {
+		if err := manifests.Commit(); err != nil {
 			return err
 		}
 	default:
@@ -292,7 +290,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
 	}
 
-	knobsC, commit, err := openKnobs(s.Paths, "")
+	knobsC, manifests, err := openKnobs(s.Paths, "")
 	if err != nil {
 		return err
 	}
@@ -329,7 +327,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 	msU := allManifests(knobsU)
 	msC[0].source.file.buf = msU[0].source.file.buf
 
-	return commit()
+	return manifests.Commit()
 }
 
 type ValuesCmd struct {
@@ -419,7 +417,7 @@ func checkKnobs(knobs Knobs) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error, err error) {
+func openKnobs(paths []string, schema string) (knobs Knobs, manifests Manifests, err error) {
 	if len(paths) == 0 {
 		paths = []string{"-"}
 	}
@@ -433,8 +431,7 @@ func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error,
 	}
 
 	var (
-		manifests Manifests
-		errs      []error
+		errs []error
 	)
 	for _, f := range filenames {
 		s, err := newShadowFile(f)
@@ -477,7 +474,7 @@ func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error,
 	err = checkKnobs(knobs)
 	// let the caller decide whether the validation error is fatal
 
-	return knobs, manifests.Commit, err
+	return knobs, manifests, err
 }
 
 func main() {

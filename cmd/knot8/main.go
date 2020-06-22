@@ -34,6 +34,10 @@ type CommonFlags struct {
 	Paths []string `name:"filename" short:"f" help:"Filenames or directories containing k8s manifests with knobs." type:"file"`
 }
 
+type CommonSchemaFlags struct {
+	Schema string `name:"schema" help:"File containing field definitions. Used to augment the field definitions present inline in the resource annotations. The file format mirrors the format of real K8s resources, but shall only contain apiVersion,kind,metadata name, namespace and field annotations."`
+}
+
 type Setter struct {
 	Field string
 	Value string
@@ -61,6 +65,8 @@ func (s *Setter) UnmarshalText(in []byte) error {
 
 type SetCmd struct {
 	CommonFlags
+	CommonSchemaFlags
+
 	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value or field=@filename, where a leading @ can be escaped with a backslash."`
 	From   []string `name:"from" type:"file" help:"Read values from one or more files. The values will be read from not8 annotated k8s resources."`
 	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
@@ -68,7 +74,7 @@ type SetCmd struct {
 }
 
 func (s *SetCmd) Run(ctx *Context) error {
-	knobs, commit, err := openKnobs(s.Paths)
+	knobs, commit, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -114,7 +120,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 }
 
 func settersFromFiles(paths []string) ([]Setter, error) {
-	knobs, _, err := openKnobs(paths)
+	knobs, _, err := openKnobs(paths, "")
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +201,7 @@ type DiffCmd struct {
 }
 
 func (s *DiffCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths)
+	knobs, _, err := openKnobs(s.Paths, "")
 	if err != nil {
 		return err
 	}
@@ -276,7 +282,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
 	}
 
-	knobsC, commit, err := openKnobs(s.Paths)
+	knobsC, commit, err := openKnobs(s.Paths, "")
 	if err != nil {
 		return err
 	}
@@ -297,7 +303,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	knobsU, _, err := openKnobs([]string{upstream.Name()})
+	knobsU, _, err := openKnobs([]string{upstream.Name()}, "")
 	if err != nil {
 		return err
 	}
@@ -318,13 +324,14 @@ func (s *PullCmd) Run(ctx *Context) error {
 
 type ValuesCmd struct {
 	CommonFlags
+	CommonSchemaFlags
 
 	NamesOnly bool   `short:"k" help:"Print only field names and not their values."`
 	Field     string `arg:"" optional:"" help:"Print the value of one specific field"`
 }
 
 func (s *ValuesCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths)
+	knobs, _, err := openKnobs(s.Paths, s.Schema)
 	if err != nil && !(isNotUniqueValueError(err) && (s.NamesOnly || s.Field != "")) {
 		return err
 	}
@@ -353,10 +360,11 @@ func (s *ValuesCmd) Run(ctx *Context) error {
 
 type LintCmd struct {
 	CommonFlags
+	CommonSchemaFlags
 }
 
 func (s *LintCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths)
+	knobs, _, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -385,7 +393,11 @@ func checkKnobs(knobs Knobs) error {
 		if err != nil {
 			errs = append(errs, err)
 		} else if !checkKnobValues(values) {
-			errs = append(errs, fmt.Errorf("values pointed by field %q are not unique", n))
+			var vs []string
+			for _, v := range values {
+				vs = append(vs, v.value)
+			}
+			errs = append(errs, fmt.Errorf("values pointed by field %q are not unique (%q)", n, vs))
 		}
 	}
 	if errs != nil {
@@ -397,7 +409,7 @@ func checkKnobs(knobs Knobs) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string) (knobs Knobs, commit func() error, err error) {
+func openKnobs(paths []string, schema string) (knobs Knobs, commit func() error, err error) {
 	if len(paths) == 0 {
 		paths = []string{"-"}
 	}
@@ -431,6 +443,24 @@ func openKnobs(paths []string) (knobs Knobs, commit func() error, err error) {
 	knobs, err = parseKnobs(manifests)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if schema != "" {
+		s, err := newShadowFile(schema)
+		if err != nil {
+			return nil, nil, err
+		}
+		ms, err := parseManifests(s)
+		if err != nil {
+			return nil, nil, err
+		}
+		ext, err := parseKnobs(ms)
+		if err != nil {
+			return nil, nil, err
+		}
+		ext.Rebase(manifests)
+		// TODO: merge with internal schema
+		knobs = ext
 	}
 
 	err = checkKnobs(knobs)

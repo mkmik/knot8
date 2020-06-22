@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /spec/template/spec/containers/~{"name":"app"}/env/~{"name":"FOO"}/value
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+  annotations:
+    field.knot8.io/foo: /data/foo

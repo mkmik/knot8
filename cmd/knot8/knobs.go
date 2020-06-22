@@ -71,6 +71,24 @@ func (ks Knobs) Names() []string {
 	return names
 }
 
+// Rebase updates the manifest pointer inside each Pointer value
+// so that it points to the manifest for the matching resource (namespace+name)
+func (ks Knobs) Rebase(dst Manifests) {
+	nn := map[FQN]*Manifest{}
+	for _, m := range dst {
+		nn[m.FQN()] = m
+	}
+	for n := range ks {
+		for i, p := range ks[n].Pointers {
+			if d, found := nn[p.Manifest.FQN()]; found {
+				u := ks[n]
+				u.Pointers[i].Manifest = d
+				ks[n] = u
+			}
+		}
+	}
+}
+
 type KnobTarget struct {
 	value string
 	ptr   Pointer

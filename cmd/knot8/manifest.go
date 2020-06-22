@@ -12,16 +12,36 @@ import (
 )
 
 type Manifest struct {
-	APIVersion string         `yaml:"apiVersion"`
-	Kind       string         `yaml:"kind"`
-	Metadata   ObjectMetadata `yaml:"metadata"`
+	VersionKind `yaml:",inline"`
+	Metadata    ObjectMetadata `yaml:"metadata"`
 
 	raw    yaml.Node
 	source manifestSource
 }
 
+func (m Manifest) FQN() FQN {
+	return FQN{m.VersionKind, m.Metadata.NamespacedName}
+}
+
+type VersionKind struct {
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+}
+
 type ObjectMetadata struct {
-	Annotations map[string]string `json:"annotations"`
+	NamespacedName `yaml:",inline"`
+	Annotations    map[string]string `json:"annotations"`
+}
+
+type NamespacedName struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+// FQN is a fully qualified name
+type FQN struct {
+	VersionKind
+	NamespacedName
 }
 
 type manifestSource struct {

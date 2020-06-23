@@ -88,14 +88,32 @@ it's interpeted as filename, whose content is used as
 .It Fl Fl from
 Read values from one or more files. The files can be simple key/value YAML maps
 (like YTT values.yaml) or full blown manifests which contain knot8 field
-annotations. In that case, the annotations will be used to locate the values.
+annotations. In that case, the annotations will be used to locate the values (i.e.
+the file will be implicitly passed to
+.Fl Fl scheme).
+Order matters as values present in later files will override values
+specified in earlier files. By default a file called
+.Ic Knot8file
+in the current directory will be
+prepended to the list of from files.
 .
 .It Fl Fl freeze
 Update the knot8.io/orig annotation with a snapshot of the current field values.
 This should be used when maintaining a manifest for publishing.
+.
+.It Fl Fl stdout
+Print the modified manifests to stdout instead of mutating them in-place.
+.
 .El
 .
+.\" Subcommand
+.Ss cat
 .
+.Nm Ic cat Op Fl f Ar file,...
+.Brq Ar field=value ... | Fl Fl from Ar file,...
+.Pp
+Alias for
+.Ar set Fl Fl stdout .
 .\" Subcommand
 .Ss values
 .
@@ -133,14 +151,26 @@ after merging the custom field values present in the local manifests.
 .Sh OPTIONS
 .
 .Bl -tag -width 4n
+.
 .It Fl f , Fl Fl file
 Path to one or more JSON/YAML manifests. The flag can be repeated and/or
 the filenames can be comma-separated. If omitted, the manifests are read from
 standard input. Each YAML file can contain multiple manifests.
+.
+.It Fl Fl schema
+Path to a file containing a stream of YAML manifests containing the out-of-band
+schema for the main manifest set. The same file can be used while setting values,
+see --from. If a file called
+.Ic Knot8file
+exists in the current directory it will be
+implicitly used as a schema file.
+.
 .It Fl Fl help
 Show context-sensitive help.
+.
 .It Fl Fl version
 Print version information and quit.
+.
 .El
 .
 .
@@ -269,6 +299,40 @@ $ kubectl get deploy myapp -oyaml | knot8 set foo=WOOF | kubectl apply -f -
 .
 .
 .\" Example 4
+.Ss Out of band schema
+So far we've seen how knot8 can be used to update fields whose declaration lives inside the manifest itself.
+This doesn't work unless the upstream author of the manifest embraces knot8 field definitions.
+.Pp
+The
+.Fl Fl schema
+flag allows us to define the fields in an external file, without having to touch the original file.
+By default a file called
+.Ic Knot8file
+is used as schema even if no
+.Fl fl schema
+flag is provided.
+.Pp
+.Bd -literal -offset indent
+$ wget https://raw.githubusercontent.com/kubernetes/website/master/\\
+content/en/examples/application/deployment.yaml
+$ cat >Knot8file <<EOF
+appImage: bitnami/nginx:1.14.2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  annotations:
+    field.knot8.io/replicas: /spec/replicas
+    field.knot8.io/appImage: /spec/template/spec/containers/~{"name":"nginx"}/image
+EOF
+$ knot8 cat -f .
+...
+
+.Ed
+.
+.
+.\" Example 5
 .Ss Detailed 3-way merge walkthrough
 .
 Imagine you download an app manifest:

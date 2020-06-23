@@ -35,18 +35,18 @@ kind: Deployment
 metadata:
   name: nginx-deployment
   annotations:
-    field.knot8.io/appName: /metadata/name
+    field.knot8.io/replicas: /spec/replicas
 EOF
 ```
 
 Now you told knot8 about the _schema_ of your manifest set and you can operate on _fields.
 For example you can see the current values of all the declared fields. As we didn't override the field values,
-we'll see the value present in the deployment.yaml manifest as pointed to by the `/metadata/name` JSON Pointer:
+we'll see the value present in the deployment.yaml manifest as pointed to by the `/spec/replicas` JSON Pointer:
 
 
 ```bash
 $ knot8 values -f .
-appName: nginx-deployment
+replicas: "2"
 ```
 
 The `Knot8file` is read in by default; you can save the schema in another file, you'd have to pass `--schema` explicitly.
@@ -54,24 +54,27 @@ The `Knot8file` is read in by default; you can save the schema in another file, 
 Now, let's apply an override:
 
 ```bash
-$ knot8 set -f . --stdout appName=mytest
+$ knot8 set -f . --stdout replicas=3
 apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
 kind: Deployment
 metadata:
-  name: mytest
+  name: nginx-deployment
 spec:
   selector:
-    matchLabels....
+    matchLabels:
+      app: nginx
+  replicas: 3 # tells deployment to run 2 pods matching the template
+...
 ```
 
 (The `--stdout` flag instructs knot8 to not mutate the manifest set in-place. No worries, there a syntax sugar for the non-inplace workflow, bear with me for a moment)
 
-What happened here is that knot updated the `appName` field with the user specified value `mytest`.
+What happened here is that knot updated the `replicas` field with the user specified value `3`.
 The output is a legal manifest set, so it's possible to further process it with knot8:
 
 ```
-$ knot8 set -f . --stdout appName=mytest | knot8 values
-appName: mytest
+$ knot8 set -f . --stdout replicas=3 | knot8 values
+replicas: "3"
 ```
 
 A more useful and slightly more complicated example involves overriding the image name. Let's add an `appImage`
@@ -84,7 +87,7 @@ kind: Deployment
 metadata:
   name: nginx-deployment
   annotations:
-    field.knot8.io/appName: /metadata/name
+    field.knot8.io/replicas: /spec/replicas
     field.knot8.io/appImage: /spec/template/spec/containers/~{"name":"nginx"}/image
 EOF
 ```
@@ -92,7 +95,7 @@ EOF
 ```bash
 $ knot8 values -f .
 appImage: nginx:1.14.2
-appName: nginx-deployment
+replicas: "2"
 $ knot8 set -f . --stdout appImage=bitnami/nginx:1.14.2
 ...
       containers:
@@ -124,7 +127,7 @@ kind: Deployment
 metadata:
   name: nginx-deployment
   annotations:
-    field.knot8.io/appName: /metadata/name
+    field.knot8.io/replicas: /spec/replicas
     field.knot8.io/appImage: /spec/template/spec/containers/~{"name":"nginx"}/image
 EOF
 ```

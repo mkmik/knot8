@@ -1,4 +1,6 @@
 [![](https://img.shields.io/badge/man-page-blue)](https://knot8.io/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mkmik/knot8)](https://goreportcard.com/report/github.com/mkmik/knot8)
+
 
 
 # knot8

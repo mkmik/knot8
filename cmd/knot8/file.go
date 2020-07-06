@@ -17,7 +17,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-// A shadowFile is in-memory copy of a file that can be commited back to disk.
+// A shadowFile is in-memory copy of a file that can be committed back to disk.
 type shadowFile struct {
 	name string
 	buf  []byte

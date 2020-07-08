@@ -242,21 +242,24 @@ func freeze(knobs map[string]Knob) error {
 	ms := allManifests(knobs)
 	for _, m := range ms {
 		if _, ok := m.Metadata.Annotations[originalAnno]; ok {
-			updateOriginalAnno(m.source.file, knobs)
+			if err := updateOriginalAnno(m.source, knobs); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func updateOriginalAnno(f *shadowFile, knobs map[string]Knob) error {
+func updateOriginalAnno(src manifestSource, knobs map[string]Knob) error {
 	path := fmt.Sprintf("/metadata/annotations/%s", strings.ReplaceAll(originalAnno, "/", "~1"))
 	body, err := renderOriginalAnnoBody(knobs)
 	if err != nil {
 		return err
 	}
 	edits := []lensed.Mapping{
-		{path, string(body)},
+		{fmt.Sprintf("~(yamls)/%d%s", src.streamPos, path), string(body)},
 	}
+	f := src.file
 	b, err := lensed.Apply(f.buf, edits)
 	if err != nil {
 		return err

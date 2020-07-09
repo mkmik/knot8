@@ -17,6 +17,7 @@ var (
 		"toml":   TOMLLens{},
 		"base64": Base64Lens{},
 		"line":   LineLens{},
+		"regexp": RegexpLens{},
 	}
 )
 

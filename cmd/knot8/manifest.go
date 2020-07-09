@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/mkmik/multierror"
@@ -64,11 +65,11 @@ func parseManifests(f *shadowFile) (Manifests, error) {
 		if err := d.Decode(&m.raw); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing %q: %w", f.name, err)
 		}
 
 		if err := m.raw.Decode(&m); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing %q: %w", f.name, err)
 		}
 		// Skip YAML files that are not K8s manifests.
 		if m.APIVersion == "" && m.Kind == "" {

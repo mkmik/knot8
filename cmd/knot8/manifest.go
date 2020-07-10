@@ -92,16 +92,18 @@ type Manifests []*Manifest
 func (ms Manifests) Commit() error {
 	uniq := map[*shadowFile]struct{}{}
 
-	for _, m := range ms {
-		uniq[m.source.file] = struct{}{}
-	}
-
 	var errs []error
-	for f := range uniq {
-		if err := f.Commit(); err != nil {
+	for _, m := range ms {
+		if _, found := uniq[m.source.file]; found {
+			continue
+		}
+		uniq[m.source.file] = struct{}{}
+
+		if err := m.source.file.Commit(); err != nil {
 			errs = append(errs, err)
 		}
 	}
+
 	if errs != nil {
 		return multierror.Join(errs)
 	}

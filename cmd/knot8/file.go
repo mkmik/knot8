@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/mattn/go-isatty"
 	"github.com/mkmik/multierror"
@@ -105,6 +106,7 @@ func expandPaths(paths []string) ([]string, error) {
 	if errs != nil {
 		return nil, multierror.Join(errs)
 	}
+	sort.Strings(res)
 	return res, nil
 }
 

@@ -105,7 +105,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		s.From = append([]string{Knot8file}, s.From...)
 	}
 
-	knobs, manifests, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 	// if outputing to stdout instead of inline (either via --stdout, or because of the cat command),
 	// rename all filenames to "-" causing them to be treated as stdio upon commit.
 	if s.Stdout {
-		for _, m := range manifests {
+		for _, m := range manifestSet.Manifests {
 			m.source.file.name = "-"
 		}
 	}
@@ -127,7 +127,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		values = append(fromValues, values...)
 	}
 
-	batch := knobs.NewEditBatch()
+	batch := manifestSet.Fields.NewEditBatch()
 	var errs []error
 	for _, f := range values {
 		if err := batch.Set(f.Field, f.Value); err != nil {
@@ -142,14 +142,14 @@ func (s *SetCmd) Run(ctx *Context) error {
 	}
 
 	if s.Freeze {
-		if err := freeze(knobs); err != nil {
+		if err := freeze(manifestSet.Fields); err != nil {
 			return err
 		}
 	}
 
 	switch s.Format {
 	case "":
-		if err := manifests.Commit(); err != nil {
+		if err := manifestSet.Manifests.Commit(); err != nil {
 			return err
 		}
 	default:
@@ -208,11 +208,11 @@ type DiffCmd struct {
 }
 
 func (s *DiffCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths, "")
+	manifestSet, err := openKnobs(s.Paths, "")
 	if err != nil {
 		return err
 	}
-	d, err := diff(knobs)
+	d, err := diff(manifestSet.Fields)
 	if err != nil {
 		return err
 	}
@@ -292,11 +292,11 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
 	}
 
-	knobsC, manifests, err := openKnobs(s.Paths, "")
+	manifestSetC, err := openKnobs(s.Paths, "")
 	if err != nil {
 		return err
 	}
-	d, err := diff(knobsC)
+	d, err := diff(manifestSetC.Fields)
 	if err != nil {
 		return err
 	}
@@ -313,11 +313,11 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	knobsU, _, err := openKnobs([]string{upstream.Name()}, "")
+	manifestSetU, err := openKnobs([]string{upstream.Name()}, "")
 	if err != nil {
 		return err
 	}
-	batch := knobsU.NewEditBatch()
+	batch := manifestSetU.Fields.NewEditBatch()
 	for n, v := range d {
 		batch.Set(n, v)
 	}
@@ -325,11 +325,11 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	msC := allManifests(knobsC)
-	msU := allManifests(knobsU)
+	msC := allManifests(manifestSetC.Fields) // TODO: use manifestSetC.Manifests
+	msU := allManifests(manifestSetU.Fields)
 	msC[0].source.file.buf = msU[0].source.file.buf
 
-	return manifests.Commit()
+	return manifestSetC.Manifests.Commit()
 }
 
 type ValuesCmd struct {
@@ -341,25 +341,25 @@ type ValuesCmd struct {
 }
 
 func (s *ValuesCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openKnobs(s.Paths, s.Schema)
 	if err != nil && !(isNotUniqueValueError(err) && (s.NamesOnly || s.Field != "")) {
 		return err
 	}
 
 	if s.NamesOnly {
-		for _, n := range knobs.Names() {
+		for _, n := range manifestSet.Fields.Names() {
 			fmt.Printf("%s\n", n)
 		}
 		return nil
 	} else if s.Field != "" {
-		v, err := knobs.GetValue(s.Field)
+		v, err := manifestSet.Fields.GetValue(s.Field)
 		if err != nil {
 			return err
 		}
 		fmt.Println(v)
 		return nil
 	} else {
-		b, err := renderOriginalAnnoBody(knobs)
+		b, err := renderOriginalAnnoBody(manifestSet.Fields)
 		if err != nil {
 			return err
 		}
@@ -374,12 +374,12 @@ type LintCmd struct {
 }
 
 func (s *LintCmd) Run(ctx *Context) error {
-	knobs, _, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openKnobs(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
 
-	if err := checkKnobs(knobs); err != nil {
+	if err := checkKnobs(manifestSet.Fields); err != nil {
 		return err
 	}
 
@@ -419,17 +419,21 @@ func checkKnobs(knobs Knobs) error {
 // openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string, schema string) (knobs Knobs, manifests Manifests, err error) {
+func openKnobs(paths []string, schema string) (*ManifestSet, error) {
+	var (
+		manifests Manifests
+		knobs     Knobs
+	)
 	if len(paths) == 0 {
 		paths = []string{"-"}
 	}
 
 	filenames, err := expandPaths(paths)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if len(filenames) == 0 {
-		return nil, nil, fmt.Errorf("cannot find any manifest in %q", paths)
+		return nil, fmt.Errorf("cannot find any manifest in %q", paths)
 	}
 
 	var (
@@ -446,29 +450,29 @@ func openKnobs(paths []string, schema string) (knobs Knobs, manifests Manifests,
 		}
 	}
 	if errs != nil {
-		return nil, nil, multierror.Join(errs)
+		return nil, multierror.Join(errs)
 	}
 
 	knobs, err = parseKnobs(manifests)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if schema != "" {
 		s, err := newShadowFile(schema)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		ms, err := parseManifests(s)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		ext, err := parseKnobs(ms)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		if err := ext.Rebase(manifests); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		knobs.MergeSchema(ext)
 	}
@@ -476,7 +480,7 @@ func openKnobs(paths []string, schema string) (knobs Knobs, manifests Manifests,
 	err = checkKnobs(knobs)
 	// let the caller decide whether the validation error is fatal
 
-	return knobs, manifests, err
+	return &ManifestSet{Fields: knobs, Manifests: manifests}, err
 }
 
 func main() {

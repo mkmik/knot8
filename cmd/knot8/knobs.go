@@ -18,6 +18,11 @@ const (
 	originalAnno = "knot8.io/original"
 )
 
+type ManifestSet struct {
+	Manifests Manifests
+	Fields    Knobs
+}
+
 type Knob struct {
 	Name     string
 	Pointers []Pointer

@@ -225,19 +225,8 @@ func (b EditBatch) Commit() error {
 	return nil
 }
 
-func allManifests(knobs Knobs) []*Manifest {
-	var res []*Manifest
-	for _, k := range knobs {
-		for _, p := range k.Pointers {
-			res = append(res, p.Manifest)
-		}
-	}
-	return res
-}
-
-func findOriginal(knobs Knobs) (map[string]string, error) {
-	ms := allManifests(knobs)
-	for _, m := range ms {
+func findOriginal(ms *ManifestSet) (map[string]string, error) {
+	for _, m := range ms.Manifests {
 		if o, ok := m.Metadata.Annotations[originalAnno]; ok {
 			var res map[string]string
 			if err := yaml.Unmarshal([]byte(o), &res); err != nil {

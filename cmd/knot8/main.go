@@ -142,7 +142,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 	}
 
 	if s.Freeze {
-		if err := freeze(manifestSet.Fields); err != nil {
+		if err := freeze(manifestSet); err != nil {
 			return err
 		}
 	}
@@ -212,21 +212,21 @@ func (s *DiffCmd) Run(ctx *Context) error {
 	if err != nil {
 		return err
 	}
-	d, err := diff(manifestSet.Fields)
+	d, err := diff(manifestSet)
 	if err != nil {
 		return err
 	}
 	return yaml.NewEncoder(os.Stdout).Encode(d)
 }
 
-func diff(knobs map[string]Knob) (map[string]string, error) {
-	o, err := findOriginal(knobs)
+func diff(manifestSet *ManifestSet) (map[string]string, error) {
+	o, err := findOriginal(manifestSet)
 	if err != nil {
 		return nil, err
 	}
 
 	dirty := map[string]string{}
-	for n, k := range knobs {
+	for n, k := range manifestSet.Fields {
 		values, err := k.GetAll()
 		if err != nil {
 			return nil, err
@@ -238,11 +238,10 @@ func diff(knobs map[string]Knob) (map[string]string, error) {
 	return dirty, nil
 }
 
-func freeze(knobs map[string]Knob) error {
-	ms := allManifests(knobs)
-	for _, m := range ms {
+func freeze(ms *ManifestSet) error {
+	for _, m := range ms.Manifests {
 		if _, ok := m.Metadata.Annotations[originalAnno]; ok {
-			if err := updateOriginalAnno(m.source, knobs); err != nil {
+			if err := updateOriginalAnno(m.source, ms.Fields); err != nil {
 				return err
 			}
 		}
@@ -296,7 +295,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 	if err != nil {
 		return err
 	}
-	d, err := diff(manifestSetC.Fields)
+	d, err := diff(manifestSetC)
 	if err != nil {
 		return err
 	}
@@ -325,8 +324,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	msC := allManifests(manifestSetC.Fields) // TODO: use manifestSetC.Manifests
-	msU := allManifests(manifestSetU.Fields)
+	msC, msU := manifestSetC.Manifests, manifestSetU.Manifests
 	msC[0].source.file.buf = msU[0].source.file.buf
 
 	return manifestSetC.Manifests.Commit()

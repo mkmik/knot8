@@ -11,13 +11,14 @@ import (
 var (
 	// Default is the default map of lenses.
 	Default = LensMap{
-		"":       YAMLLens{},
-		"yaml":   YAMLLens{},
-		"yamls":  MultiYAMLLens{},
-		"toml":   TOMLLens{},
-		"base64": Base64Lens{},
-		"line":   LineLens{},
-		"regexp": RegexpLens{},
+		"":            YAMLLens{},
+		"yaml":        YAMLLens{},
+		"yamls":       MultiYAMLLens{},
+		"toml":        TOMLLens{},
+		"base64":      Base64Lens{},
+		"line":        LineLens{},
+		"regexp":      RegexpLens{},
+		"ociImageRef": OCIImageRef{},
 	}
 )
 

@@ -36,7 +36,7 @@ var cli struct {
 }
 
 type CommonFlags struct {
-	Paths []string `name:"filename" short:"f" help:"Filenames or directories containing k8s manifests with knobs." type:"file"`
+	Paths []string `name:"filename" short:"f" help:"Filenames or directories containing k8s manifests with fields." type:"file"`
 }
 
 type CommonSchemaFlags struct {
@@ -104,7 +104,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		s.From = append([]string{Knot8file}, s.From...)
 	}
 
-	manifestSet, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openFields(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ type DiffCmd struct {
 }
 
 func (s *DiffCmd) Run(ctx *Context) error {
-	manifestSet, err := openKnobs(s.Paths, "")
+	manifestSet, err := openFields(s.Paths, "")
 	if err != nil {
 		return err
 	}
@@ -240,9 +240,9 @@ func freeze(ms *ManifestSet) error {
 	return nil
 }
 
-func updateOriginalAnno(src manifestSource, knobs map[string]Knob) error {
+func updateOriginalAnno(src manifestSource, fields map[string]Field) error {
 	path := fmt.Sprintf("/metadata/annotations/%s", strings.ReplaceAll(originalAnno, "/", "~1"))
-	body, err := renderOriginalAnnoBody(knobs)
+	body, err := renderOriginalAnnoBody(fields)
 	if err != nil {
 		return err
 	}
@@ -258,9 +258,9 @@ func updateOriginalAnno(src manifestSource, knobs map[string]Knob) error {
 	return nil
 }
 
-func renderOriginalAnnoBody(knobs map[string]Knob) ([]byte, error) {
+func renderOriginalAnnoBody(fields map[string]Field) ([]byte, error) {
 	values := map[string]string{}
-	for n, k := range knobs {
+	for n, k := range fields {
 		kv, err := k.GetAll()
 		if err != nil {
 			return nil, err
@@ -282,7 +282,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
 	}
 
-	manifestSetC, err := openKnobs(s.Paths, "")
+	manifestSetC, err := openFields(s.Paths, "")
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	manifestSetU, err := openKnobs([]string{upstream.Name()}, "")
+	manifestSetU, err := openFields([]string{upstream.Name()}, "")
 	if err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ type ValuesCmd struct {
 }
 
 func (s *ValuesCmd) Run(ctx *Context) error {
-	manifestSet, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openFields(s.Paths, s.Schema)
 	if err != nil && !(isNotUniqueValueError(err) && (s.NamesOnly || s.Field != "")) {
 		return err
 	}
@@ -363,12 +363,12 @@ type LintCmd struct {
 }
 
 func (s *LintCmd) Run(ctx *Context) error {
-	manifestSet, err := openKnobs(s.Paths, s.Schema)
+	manifestSet, err := openFields(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
 
-	if err := checkKnobs(manifestSet.Fields); err != nil {
+	if err := checkFields(manifestSet.Fields); err != nil {
 		return err
 	}
 
@@ -385,13 +385,13 @@ func isNotUniqueValueError(err error) bool {
 	return errors.As(err, &u)
 }
 
-func checkKnobs(knobs Knobs) error {
+func checkFields(fields Fields) error {
 	var errs []error
-	for _, n := range knobs.Names() {
-		values, err := knobs.GetAll(n)
+	for _, n := range fields.Names() {
+		values, err := fields.GetAll(n)
 		if err != nil {
 			errs = append(errs, err)
-		} else if !checkKnobValues(values) {
+		} else if !checkFieldValues(values) {
 			var vs []string
 			for _, v := range values {
 				vs = append(vs, v.value)
@@ -405,13 +405,13 @@ func checkKnobs(knobs Knobs) error {
 	return nil
 }
 
-// openKnobs returns a map of knobs defined in the set of files referenced by the path arguments (see openFiles).
+// openFields returns a map of fields defined in the set of files referenced by the path arguments (see openFiles).
 // It also returns a printStdin callback, meant to be called before exiting successfully in order
 // to print out the content of the (possibly modified) stream when using knot8 in "pipe" mode.
-func openKnobs(paths []string, schema string) (*ManifestSet, error) {
+func openFields(paths []string, schema string) (*ManifestSet, error) {
 	var (
 		manifests Manifests
-		knobs     Knobs
+		fields     Fields
 	)
 	if len(paths) == 0 {
 		paths = []string{"-"}
@@ -442,7 +442,7 @@ func openKnobs(paths []string, schema string) (*ManifestSet, error) {
 		return nil, multierror.Join(errs)
 	}
 
-	knobs, err = parseKnobs(manifests)
+	fields, err = parseFields(manifests)
 	if err != nil {
 		return nil, err
 	}
@@ -456,20 +456,20 @@ func openKnobs(paths []string, schema string) (*ManifestSet, error) {
 		if err != nil {
 			return nil, err
 		}
-		ext, err := parseKnobs(ms)
+		ext, err := parseFields(ms)
 		if err != nil {
 			return nil, err
 		}
 		if err := ext.Rebase(manifests); err != nil {
 			return nil, err
 		}
-		knobs.MergeSchema(ext)
+		fields.MergeSchema(ext)
 	}
 
-	err = checkKnobs(knobs)
+	err = checkFields(fields)
 	// let the caller decide whether the validation error is fatal
 
-	return &ManifestSet{Fields: knobs, Manifests: manifests}, err
+	return &ManifestSet{Fields: fields, Manifests: manifests}, err
 }
 
 func main() {

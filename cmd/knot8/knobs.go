@@ -20,10 +20,10 @@ const (
 
 type ManifestSet struct {
 	Manifests Manifests
-	Fields    Knobs
+	Fields    Fields
 }
 
-type Knob struct {
+type Field struct {
 	Name     string
 	Pointers []Pointer
 }
@@ -37,15 +37,15 @@ func (p Pointer) Abs() string {
 	return fmt.Sprintf("~(yamls)/%d%s", p.Manifest.source.streamPos, p.Expr)
 }
 
-type Knobs map[string]Knob
+type Fields map[string]Field
 
-func parseKnobs(manifests []*Manifest) (Knobs, error) {
-	res := Knobs{}
+func parseFields(manifests []*Manifest) (Fields, error) {
+	res := Fields{}
 	var errs []error
 	for _, m := range manifests {
 		for k, v := range m.Metadata.Annotations {
 			if strings.HasPrefix(k, annoPrefix) {
-				if err := res.addKnob(m, strings.TrimPrefix(k, annoPrefix), v); err != nil {
+				if err := res.addField(m, strings.TrimPrefix(k, annoPrefix), v); err != nil {
 					errs = append(errs, err)
 				}
 			}
@@ -57,7 +57,7 @@ func parseKnobs(manifests []*Manifest) (Knobs, error) {
 	return res, nil
 }
 
-func (ks Knobs) addKnob(m *Manifest, n, e string) error {
+func (ks Fields) addField(m *Manifest, n, e string) error {
 	k := ks[n]
 	k.Name = n
 	k.Pointers = append(k.Pointers, Pointer{Expr: e, Manifest: m})
@@ -65,8 +65,8 @@ func (ks Knobs) addKnob(m *Manifest, n, e string) error {
 	return nil
 }
 
-// Names returns a sorted slice of knob names.
-func (ks Knobs) Names() []string {
+// Names returns a sorted slice of field names.
+func (ks Fields) Names() []string {
 	var names []string
 	for n := range ks {
 		names = append(names, n)
@@ -78,7 +78,7 @@ func (ks Knobs) Names() []string {
 
 // Rebase updates the manifest pointer inside each Pointer value
 // so that it points to the manifest for the matching resource (namespace+name)
-func (ks Knobs) Rebase(dst Manifests) error {
+func (ks Fields) Rebase(dst Manifests) error {
 	nn := map[FQN]*Manifest{}
 	for _, m := range dst {
 		nn[m.FQN()] = m
@@ -104,7 +104,7 @@ func (ks Knobs) Rebase(dst Manifests) error {
 }
 
 // MergeSchema merges the field definitions from other into the receiver.
-func (ks Knobs) MergeSchema(other Knobs) {
+func (ks Fields) MergeSchema(other Fields) {
 	for n := range other {
 		k := ks[n]
 
@@ -122,38 +122,38 @@ func (ks Knobs) MergeSchema(other Knobs) {
 	}
 }
 
-type KnobTarget struct {
+type FieldTarget struct {
 	value string
 	ptr   Pointer
 }
 
-func checkKnobValues(values []KnobTarget) bool {
+func checkFieldValues(values []FieldTarget) bool {
 	return allSame(len(values), func(i, j int) bool { return values[i].value == values[j].value })
 }
 
-func (ks Knobs) GetAll(n string) ([]KnobTarget, error) {
+func (ks Fields) GetAll(n string) ([]FieldTarget, error) {
 	k, ok := ks[n]
 	if !ok {
-		return nil, fmt.Errorf("knob %q not found", n)
+		return nil, fmt.Errorf("field %q not found", n)
 	}
 	return k.GetAll()
 }
 
-func (ks Knobs) GetValue(n string) (string, error) {
+func (ks Fields) GetValue(n string) (string, error) {
 	values, err := ks.GetAll(n)
 	if err != nil {
 		return "", err
 	}
-	if !checkKnobValues(values) {
+	if !checkFieldValues(values) {
 		return "", fmt.Errorf("values pointed by field %q are not unique", n)
 	}
 	return values[0].value, nil
 }
 
-func (k Knob) GetAll() ([]KnobTarget, error) {
+func (k Field) GetAll() ([]FieldTarget, error) {
 	var (
 		errs []error
-		res  []KnobTarget
+		res  []FieldTarget
 	)
 	for _, p := range k.Pointers {
 		r, err := lensed.Get(p.Manifest.source.file.buf, []string{p.Abs()})
@@ -162,7 +162,7 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 			continue
 		}
 		v := string(r[0])
-		res = append(res, KnobTarget{ptr: p, value: v})
+		res = append(res, FieldTarget{ptr: p, value: v})
 	}
 	if errs != nil {
 		return nil, multierror.Join(errs)
@@ -170,16 +170,16 @@ func (k Knob) GetAll() ([]KnobTarget, error) {
 	return res, nil
 }
 
-// An EditBatch holds requests to edit knobs, added via the Set method
+// An EditBatch holds requests to edit fields, added via the Set method
 // and performed in the right order by the Commit method.
 type EditBatch struct {
-	ks    Knobs
+	ks    Fields
 	edits map[*shadowFile][]lensed.Mapping
 
 	committed bool
 }
 
-func (ks Knobs) NewEditBatch() EditBatch {
+func (ks Fields) NewEditBatch() EditBatch {
 	return EditBatch{
 		ks:    ks,
 		edits: map[*shadowFile][]lensed.Mapping{},
@@ -193,7 +193,7 @@ func (b EditBatch) Set(n, v string) error {
 
 	k, ok := b.ks[n]
 	if !ok {
-		return fmt.Errorf("knob %q not found", n)
+		return fmt.Errorf("field %q not found", n)
 	}
 
 	var errs []error

@@ -20,6 +20,7 @@ var (
 		"regexp":      RegexpLens{},
 		"ociImageRef": OCIImageRef{}, // deprecated
 		"oci":         OCIImageRef{},
+		"jsonnet":     Jsonnet{},
 	}
 )
 

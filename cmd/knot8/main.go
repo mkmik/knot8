@@ -411,7 +411,7 @@ func checkFields(fields Fields) error {
 func openFields(paths []string, schema string) (*ManifestSet, error) {
 	var (
 		manifests Manifests
-		fields     Fields
+		fields    Fields
 	)
 	if len(paths) == 0 {
 		paths = []string{"-"}

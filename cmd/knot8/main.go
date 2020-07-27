@@ -93,7 +93,6 @@ type SetCmd struct {
 
 	Values []Setter `optional:"" arg:"" help:"Value to set. Format: field=value or field=@filename, where a leading @ can be escaped with a backslash."`
 	From   []string `name:"from" type:"file" help:"Read values from one or more files."`
-	Format string   `name:"format" short:"o" help:"If empty, the changes are performed in-place in the input yaml; Otherwise a patch is produced in a given format. Available formats: overlay, jsonnet."`
 	Freeze bool     `name:"freeze" help:"Save current values to knot8.io/original."`
 	Stdout bool     `name:"stdout" help:"Output to stdout and never update files in-place"`
 }
@@ -147,15 +146,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		}
 	}
 
-	switch s.Format {
-	case "":
-		if err := manifestSet.Manifests.Commit(); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("format %q not implemented yet", s.Format)
-	}
-	return nil
+	return manifestSet.Manifests.Commit()
 }
 
 func settersFromFiles(paths []string) ([]Setter, error) {

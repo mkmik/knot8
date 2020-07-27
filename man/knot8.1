@@ -437,13 +437,13 @@ When the relevant parts of the field format can be expressed with a regular expr
 use the "regexp" lens, where the format is expressed in-line in the field definition itself.
 .Pp
 For example, you can locate a docker image name inside of some configuration file (e.g. a jsonnet file)
-and then use the ociImageRef lens to further parse the image reference.
+and then use the oci lens to further parse the image reference.
 .
 .Bd -literal -offset indent
-  field.knot8.io/workerImageDigest: "/data/worker-ubuntu16-04.jsonnet/~(regexp)/{ name: 'container-image', value: 'docker:~1~1([^']*)/1/~(ociImageRef)/digest"
+  field.knot8.io/workerImageDigest: "/data/worker-ubuntu16-04.jsonnet/~(regexp)/{ name: 'container-image', value: 'docker:~1~1([^']*)/1/~(oci)/digest"
 .Ed
 .
-. When the ociImageRef finally implements the digest field we can rewrite this field definition while maintaining backward compatibility.
+. When the oci finally implements the digest field we can rewrite this field definition while maintaining backward compatibility.
 .
 .Sh SEE ALSO
 .Xr kubectl 1

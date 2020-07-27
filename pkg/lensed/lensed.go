@@ -18,7 +18,8 @@ var (
 		"base64":      Base64Lens{},
 		"line":        LineLens{},
 		"regexp":      RegexpLens{},
-		"ociImageRef": OCIImageRef{},
+		"ociImageRef": OCIImageRef{}, // deprecated
+		"oci":         OCIImageRef{},
 	}
 )
 

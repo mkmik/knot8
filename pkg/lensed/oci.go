@@ -12,7 +12,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-// OCIImageRef implements the "ociImageRef" lens.
+// OCIImageRef implements the "oci" lens.
 // The current implementation is very rough and only supports image name and tag.
 // The image name cannot contain a port number.
 type OCIImageRef struct{}
@@ -46,7 +46,7 @@ func (OCIImageRef) Apply(src []byte, vals []Setter) ([]byte, error) {
 		case "digest":
 			comp = 5
 		default:
-			return nil, fmt.Errorf("unknown ociImageRef field %q", p)
+			return nil, fmt.Errorf("unknown oci field %q", p)
 		}
 		start, end := indices[2*comp+0], indices[2*comp+1]
 
@@ -70,7 +70,7 @@ func (OCIImageRef) Apply(src []byte, vals []Setter) ([]byte, error) {
 			case "digest":
 				sep = "@sha256:"
 			default:
-				return nil, fmt.Errorf("unknown ociImageRef field %q", p)
+				return nil, fmt.Errorf("unknown oci field %q", p)
 			}
 			newval = append([]byte(sep), newval...)
 		}

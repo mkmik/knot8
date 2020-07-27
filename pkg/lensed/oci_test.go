@@ -17,42 +17,42 @@ func TestOCIImageRef(t *testing.T) {
 		{
 			"image: foo/bar:baz",
 			[]Mapping{
-				{"/image/~(ociImageRef)/tag", "quz"},
+				{"/image/~(oci)/tag", "quz"},
 			},
 			"image: foo/bar:quz",
 		},
 		{
 			"image: foo/bar:baz",
 			[]Mapping{
-				{"/image/~(ociImageRef)/image", "boo/far"},
+				{"/image/~(oci)/image", "boo/far"},
 			},
 			"image: boo/far:baz",
 		},
 		{
 			"image: foo/bar",
 			[]Mapping{
-				{"/image/~(ociImageRef)/tag", "baz"},
+				{"/image/~(oci)/tag", "baz"},
 			},
 			"image: foo/bar:baz",
 		},
 		{
 			"image: foo/bar@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf",
 			[]Mapping{
-				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+				{"/image/~(oci)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
 			},
 			"image: foo/bar@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
 		},
 		{
 			"image: foo/bar:1.0@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf",
 			[]Mapping{
-				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+				{"/image/~(oci)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
 			},
 			"image: foo/bar:1.0@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
 		},
 		{
 			"image: foo/bar",
 			[]Mapping{
-				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+				{"/image/~(oci)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
 			},
 			"image: foo/bar@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
 		},

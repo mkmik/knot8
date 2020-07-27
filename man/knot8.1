@@ -260,6 +260,12 @@ subset of YAML, the same lens works for JSON too.
 TOML support is preliminary, but simple key = "value" lines can addressed.
 .It base64
 The Base64 codec allows editing base64 encoded text bodies (e.g. in Secrets).
+.It regexp
+The regexp lens is a useful escape hatch when no lenses exist for your data type.
+The first path element after the lens defines a regular expression (using the RE2 syntax),
+while the second path element selects which capture group (0 for the whole match). Named capture groups are supported. The regular expressions is applied on the whole field contents.
+.It line
+Selects a whole line matching a regexp. Like awk's or sed's "/regexp/" construct.
 .El
 .
 .Sh EXAMPLES
@@ -420,6 +426,25 @@ data:
   fu: WOOF
   ba: "42"
 .Ed
+.
+.
+.\" Example 6
+.Ss Regexp lens
+.
+.
+Sometimes there is no lens that works with your actual field format.
+When the relevant parts of the field format can be expressed with a regular expression you can
+use the "regexp" lens, where the format is expressed in-line in the field definition itself.
+.Pp
+For example, the ociImageRef lens currently doesn't support the digest field; as an alternative we can use
+the regexp lens to select the digest body.
+.
+.Bd -literal -offset indent
+  field.knot8.io/workerImageDigest: /spec/template/spec/containers/~{"name":"runner"}/image/~(regexp)/@sha256:([a-f0-9]*)/1
+.Ed
+.
+. When the ociImageRef finally implements the digest field we can rewrite this field definition while maintaining backward compatibility.
+.
 .Sh SEE ALSO
 .Xr kubectl 1
 .Sh STANDARDS

@@ -12,6 +12,7 @@ func NewTransformer(r Replacer) ReplacerTransformer {
 	return ReplacerTransformer{r: r}
 }
 
+// A ReplacerTransformer is a transform.Transformer that applies a Replacer.
 type ReplacerTransformer struct {
 	r Replacer
 	b []byte

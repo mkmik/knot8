@@ -64,6 +64,8 @@ func (lm LensMap) Apply(src []byte, ms []Mapping) ([]byte, error) {
 	return lm.ApplySetters(src, setters)
 }
 
+// ApplySetters applies a slice of setters on a source byte slice, resolving lens names
+// from the lens map.
 func (lm LensMap) ApplySetters(src []byte, setters []Setter) ([]byte, error) {
 	als, err := lm.appliedLenses(setters)
 	if err != nil {

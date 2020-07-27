@@ -35,6 +35,27 @@ func TestOCIImageRef(t *testing.T) {
 			},
 			"image: foo/bar:baz",
 		},
+		{
+			"image: foo/bar@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf",
+			[]Mapping{
+				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+			},
+			"image: foo/bar@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
+		},
+		{
+			"image: foo/bar:1.0@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf",
+			[]Mapping{
+				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+			},
+			"image: foo/bar:1.0@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
+		},
+		{
+			"image: foo/bar",
+			[]Mapping{
+				{"/image/~(ociImageRef)/digest", "7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"},
+			},
+			"image: foo/bar@sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
+		},
 	}
 
 	for i, tc := range testCases {

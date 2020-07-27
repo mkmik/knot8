@@ -31,7 +31,7 @@ func (OCIImageRef) Apply(src []byte, vals []Setter) ([]byte, error) {
 			return nil, fmt.Errorf("unexpected path len. got: %d, max: %d", l, m)
 		}
 
-		r, err := regexp.Compile("^([^:]*)(:(.*))?$")
+		r, err := regexp.Compile("^([^:@]*)(:([^@]*))?(@sha256:([a-f0-9]*))?$")
 		if err != nil {
 			return nil, err
 		}
@@ -43,10 +43,11 @@ func (OCIImageRef) Apply(src []byte, vals []Setter) ([]byte, error) {
 			comp = 1
 		case "tag":
 			comp = 3
+		case "digest":
+			comp = 5
 		default:
 			return nil, fmt.Errorf("unknown ociImageRef field %q", p)
 		}
-
 		start, end := indices[2*comp+0], indices[2*comp+1]
 
 		var oldval []byte
@@ -62,7 +63,16 @@ func (OCIImageRef) Apply(src []byte, vals []Setter) ([]byte, error) {
 
 		if start == -1 {
 			start, end = indices[1], indices[1]
-			newval = append([]byte(":"), newval...)
+			var sep string
+			switch p := path[0]; p {
+			case "tag":
+				sep = ":"
+			case "digest":
+				sep = "@sha256:"
+			default:
+				return nil, fmt.Errorf("unknown ociImageRef field %q", p)
+			}
+			newval = append([]byte(sep), newval...)
 		}
 
 		ops = append(ops, splice.Span(start, end).With(string(newval)))

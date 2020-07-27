@@ -46,6 +46,13 @@ func TestRegexp(t *testing.T) {
 			},
 			out,
 		},
+		{
+			"foo:YmFy",
+			[]Mapping{
+				{"~(regexp)/foo:(.*)/1/~(base64)", "baz"},
+			},
+			"foo:YmF6",
+		},
 	}
 
 	for i, tc := range testCases {

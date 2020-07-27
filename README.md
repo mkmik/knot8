@@ -1,9 +1,9 @@
 [![](https://img.shields.io/badge/man-page-blue)](https://knot8.io/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mkmik/knot8)](https://goreportcard.com/report/github.com/mkmik/knot8)
+[![Go Report Card](https://goreportcard.com/badge/knot8.io)](https://goreportcard.com/report/knot8.io)
 
 
 
-# knot8
+# Notate
 
 Define and manipulate "tunable fields" in K8s manifests.
 
@@ -127,7 +127,7 @@ a `knot8.io/original` annotation with a snapshot of the original values that wil
 
 ### Linting
 
-Producing a well-formed knot8 compliant manifest has some pitfalls. For example, a field can appear
+Producing a well-formed Notate compliant manifest has some pitfalls. For example, a field can appear
 in multiple manifests, but it always needs to have the same value.
 
 This and other checks can be performed by:

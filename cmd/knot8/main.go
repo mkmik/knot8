@@ -31,6 +31,7 @@ var cli struct {
 	Diff   DiffCmd   `cmd:"" help:"Show the values different from the original."`
 	Pull   PullCmd   `cmd:"" help:"Pull and merge a new version from upstream."`
 	Lint   LintCmd   `cmd:"" help:"Check that the manifests follow the knot8 rules."`
+	Schema SchemaCmd `cmd:"" help:"Emit the schema. Can also be used to generate a Knot8file from an inline annotated manifest set."`
 
 	Version kong.VersionFlag `name:"version" help:"Print version information and quit"`
 }
@@ -402,6 +403,25 @@ func checkFields(fields Fields) error {
 	if errs != nil {
 		return errNotUniqueValue{multierror.Join(errs)}
 	}
+	return nil
+}
+
+type SchemaCmd struct {
+	CommonFlags
+	CommonSchemaFlags
+}
+
+func (s *SchemaCmd) Run(ctx *Context) error {
+	manifestSet, err := openFields(s.Paths, s.Schema)
+	if err != nil {
+		return err
+	}
+
+	enc := yaml.NewEncoder(os.Stdout)
+	for _, ms := range manifestSet.Manifests {
+		enc.Encode(ms)
+	}
+
 	return nil
 }
 

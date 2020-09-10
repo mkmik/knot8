@@ -418,8 +418,10 @@ func (s *SchemaCmd) Run(ctx *Context) error {
 	}
 
 	enc := yaml.NewEncoder(os.Stdout)
-	for _, ms := range manifestSet.Manifests {
-		enc.Encode(ms)
+	for _, m := range manifestSet.Manifests {
+		if len(m.Metadata.Annotations) > 0 {
+			enc.Encode(m)
+		}
 	}
 
 	return nil

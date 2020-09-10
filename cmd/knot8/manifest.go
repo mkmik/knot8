@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
@@ -74,6 +75,13 @@ func parseManifests(f *shadowFile) (Manifests, error) {
 		// Skip YAML files that are not K8s manifests.
 		if m.APIVersion == "" && m.Kind == "" {
 			continue
+		}
+
+		for k := range m.Metadata.Annotations {
+			c := strings.SplitN(k, "/", 2)
+			if !strings.HasSuffix(c[0], annoDomain) {
+				delete(m.Metadata.Annotations, k)
+			}
 		}
 
 		m.source = manifestSource{

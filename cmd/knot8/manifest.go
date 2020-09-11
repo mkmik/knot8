@@ -78,8 +78,7 @@ func parseManifests(f *shadowFile) (Manifests, error) {
 		}
 
 		for k := range m.Metadata.Annotations {
-			c := strings.SplitN(k, "/", 2)
-			if !strings.HasSuffix(c[0], annoDomain) {
+			if !isOurAnnotation(k) {
 				delete(m.Metadata.Annotations, k)
 			}
 		}
@@ -133,4 +132,28 @@ func (ms Manifests) Intersect(src Manifests) Manifests {
 		}
 	}
 	return res
+}
+
+// MergeAnnotations copies annotations from the src into ms if they exist
+func (ms Manifests) MergeAnnotations(src Manifests) {
+	anns := map[FQN]map[string]string{}
+	for _, s := range src {
+		anns[s.FQN()] = s.Metadata.Annotations
+	}
+
+	for _, d := range ms {
+		for k, v := range anns[d.FQN()] {
+			if isOurAnnotation(k) {
+				if d.Metadata.Annotations == nil {
+					d.Metadata.Annotations = map[string]string{}
+				}
+				d.Metadata.Annotations[k] = v
+			}
+		}
+	}
+}
+
+func isOurAnnotation(a string) bool {
+	c := strings.SplitN(a, "/", 2)
+	return strings.HasSuffix(c[0], annoDomain)
 }

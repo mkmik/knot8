@@ -117,3 +117,20 @@ func (ms Manifests) Commit() error {
 	}
 	return nil
 }
+
+// Intersect return the set of manifests in the receiver that
+// also exist in src. Equality is matched used the FQN method.
+func (ms Manifests) Intersect(src Manifests) Manifests {
+	exists := map[FQN]bool{}
+	for _, s := range src {
+		exists[s.FQN()] = true
+	}
+
+	var res Manifests
+	for _, d := range ms {
+		if exists[d.FQN()] {
+			res = append(res, d)
+		}
+	}
+	return res
+}

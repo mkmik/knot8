@@ -478,6 +478,7 @@ func openFields(paths []string, schema string) (*ManifestSet, error) {
 		if err != nil {
 			return nil, err
 		}
+		ms = ms.Intersect(manifests)
 		ext, err := parseFields(ms)
 		if err != nil {
 			return nil, err

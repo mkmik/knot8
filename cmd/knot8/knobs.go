@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	annoDomain   = "knot8.io"
 	annoPrefix   = "field.knot8.io/"
 	originalAnno = "knot8.io/original"
 )

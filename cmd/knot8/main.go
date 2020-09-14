@@ -273,6 +273,7 @@ func renderOriginalAnnoBody(fields map[string]Field) ([]byte, error) {
 
 type PullCmd struct {
 	CommonFlags
+	CommonSchemaFlags
 	Upstream string `arg:"" help:"Upstream file/URL." type:"file"`
 }
 
@@ -283,7 +284,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return fmt.Errorf("pull/merge with %d files currently not supported", len(s.Paths))
 	}
 
-	manifestSetC, err := openFields(s.Paths, "")
+	manifestSetC, err := openFields(s.Paths, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -304,7 +305,7 @@ func (s *PullCmd) Run(ctx *Context) error {
 		return err
 	}
 
-	manifestSetU, err := openFields([]string{upstream.Name()}, "")
+	manifestSetU, err := openFields([]string{upstream.Name()}, s.Schema)
 	if err != nil {
 		return err
 	}
@@ -479,6 +480,7 @@ func openFields(paths []string, schema string) (*ManifestSet, error) {
 			return nil, err
 		}
 		ms = ms.Intersect(manifests)
+		manifests.MergeAnnotations(ms)
 		ext, err := parseFields(ms)
 		if err != nil {
 			return nil, err

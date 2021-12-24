@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mkmik/multierror v0.3.0
-	github.com/pelletier/go-toml v1.8.0
+	github.com/pelletier/go-toml v1.9.4
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1

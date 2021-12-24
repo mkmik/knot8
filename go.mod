@@ -13,7 +13,7 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
-	golang.org/x/text v0.3.3
+	golang.org/x/text v0.3.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 

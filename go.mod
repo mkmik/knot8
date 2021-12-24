@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/alecthomas/kong v0.2.22
-	github.com/go-openapi/jsonpointer v0.19.3
+	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/google/go-jsonnet v0.18.0
 	github.com/hashicorp/go-getter v1.5.10
 	github.com/mattn/go-isatty v0.0.12

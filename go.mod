@@ -3,7 +3,7 @@ module knot8.io
 go 1.14
 
 require (
-	github.com/alecthomas/kong v0.2.11
+	github.com/alecthomas/kong v0.2.22
 	github.com/go-openapi/jsonpointer v0.19.3
 	github.com/google/go-jsonnet v0.18.0
 	github.com/hashicorp/go-getter v1.5.10
@@ -14,7 +14,7 @@ require (
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.3.3
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 replace gopkg.in/yaml.v3 => github.com/atomatt/yaml v0.0.0-20200228174225-55c5cf55e3ee

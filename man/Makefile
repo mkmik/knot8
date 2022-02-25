@@ -11,4 +11,4 @@ oci-push: oci-build
 oci-deploy: oci-push
 	docker pull $(IMAGE)
 	docker inspect --format='{{index .RepoDigests 0}}' $(IMAGE)
-	gcloud run deploy --platform managed --region us-central1 knot8 --image $(IMAGE)
+	gcloud run deploy --platform managed --project mkm-cloud --region us-central1 knot8 --image $(IMAGE)

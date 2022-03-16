@@ -3,7 +3,7 @@ module knot8.io
 go 1.17
 
 require (
-	github.com/alecthomas/kong v0.4.1
+	github.com/alecthomas/kong v0.5.0
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/google/go-jsonnet v0.18.0
 	github.com/hashicorp/go-getter v1.5.11

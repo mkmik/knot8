@@ -7,7 +7,7 @@ COPY knot8.1 header.html footer.html /
 RUN (cat /header.html; mandoc -Thtml -Ostyle=/mandoc.css -O fragment /knot8.1; cat /footer.html )>/app/index.html
 
 
-FROM bitnami/nginx:1.21-debian-10@sha256:5a6cc408c09bcec8c4f0979c6b9fe7ff2b3e283f795b23a92bd41d81204cb489
+FROM bitnami/nginx:1.21-debian-10@sha256:af88a7419ce278f2709ae7e6c573ef1b4ef3f68eaa9aaba56d0cde50c7618064
 
 COPY --from=build /app/index.html /app/
 COPY mandoc.css Inconsolata.woff2 /app/

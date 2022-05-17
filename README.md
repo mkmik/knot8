@@ -3,7 +3,9 @@
 
 
 
-# Notate
+# Knot8
+
+_/notate/_
 
 Define and manipulate "tunable fields" in K8s manifests.
 
@@ -143,3 +145,7 @@ knot8: error: 1 errors occurred:
 * Demo upstream repo: https://github.com/mkmik/kdemo
 * Simple example of how an end user would use it: https://github.com/mkmik/kdemo-user
 * Some users prefer separate values.yaml files to apply on the fly, e.g. for different environments: https://github.com/mkmik/kdemo-values
+
+## More
+
+* [slides](https://docs.google.com/presentation/d/1Inhk589v9HEPPUKklXensMsLv_oWVinx/edit)

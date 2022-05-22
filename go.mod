@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/kong v0.5.0
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/google/go-jsonnet v0.18.0
-	github.com/hashicorp/go-getter v1.5.11
+	github.com/hashicorp/go-getter v1.6.1
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.9.5
@@ -37,7 +37,7 @@ require (
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	google.golang.org/api v0.9.0 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect

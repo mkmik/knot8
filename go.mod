@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/kong v0.6.0
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/google/go-jsonnet v0.18.0
-	github.com/hashicorp/go-getter v1.6.1
+	github.com/hashicorp/go-getter v1.6.2
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.9.5

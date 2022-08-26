@@ -46,4 +46,4 @@ require (
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-replace gopkg.in/yaml.v3 => github.com/atomatt/yaml v0.0.0-20200228174225-55c5cf55e3ee
+replace gopkg.in/yaml.v3 => github.com/atomatt/yaml/v2 v2.2.8

@@ -12,7 +12,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
-	golang.org/x/text v0.3.8
+	golang.org/x/text v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -350,6 +350,7 @@ github.com/hashicorp/go-getter v1.6.2 h1:7jX7xcB+uVCliddZgeKyNxv0xoT7qL5KDtH7rU4
 github.com/hashicorp/go-getter v1.6.2/go.mod h1:IZCrswsZPeWv9IkVnLElzRU/gz/QPi6pZHn4tv6vbwA=
 github.com/hashicorp/go-getter v1.7.0 h1:bzrYP+qu/gMrL1au7/aDvkoOVGUJpeKBgbqRHACAFDY=
 github.com/hashicorp/go-getter v1.7.0/go.mod h1:W7TalhMmbPmsSMdNjD0ZskARur/9GJ17cfHTRtXV744=
+github.com/hashicorp/go-getter/v2 v2.2.0/go.mod h1:EcJx6oZE8hmGuRR1l38QrfnyiujQbwsEAn11eHv6l2M=
 github.com/hashicorp/go-safetemp v1.0.0 h1:2HR189eFNrjHQyENnQMMpCiBAsRxzbTMIgBhEyExpmo=
 github.com/hashicorp/go-safetemp v1.0.0/go.mod h1:oaerMy3BhqiTbVye6QuFhFtIceqFoDHxNAB65b+Rj1I=
 github.com/hashicorp/go-version v1.1.0 h1:bPIoEKD27tNdebFGGxxYwcL4nepeY4j1QP23PFRGzg0=

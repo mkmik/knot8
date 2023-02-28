@@ -7,11 +7,9 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6
 	github.com/google/go-jsonnet v0.19.1
 	github.com/hashicorp/go-getter v1.7.0
-	github.com/hashicorp/go-getter/v2 v2.2.0
 	github.com/mattn/go-isatty v0.0.17
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.9.5
-	github.com/pelletier/go-toml/v2 v2.0.7
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.7.0
@@ -35,7 +33,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
@@ -44,9 +41,9 @@ require (
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.100.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

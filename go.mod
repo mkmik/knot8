@@ -7,7 +7,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6
 	github.com/google/go-jsonnet v0.19.1
 	github.com/hashicorp/go-getter v1.7.1
-	github.com/mattn/go-isatty v0.0.17
+	github.com/mattn/go-isatty v0.0.18
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/vmware-labs/go-yaml-edit v0.3.0
@@ -43,7 +43,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.100.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

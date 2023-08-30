@@ -176,7 +176,7 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 }
 
 func parseSimplifiedValues(path string) (map[string]string, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

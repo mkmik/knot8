@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 )
 
 // Base64Lens implements the "base64" lens.
@@ -17,7 +17,7 @@ type Base64Lens struct{}
 func (Base64Lens) Apply(src []byte, vals []Setter) ([]byte, error) {
 	enc := base64.StdEncoding
 
-	b, err := ioutil.ReadAll(base64.NewDecoder(enc, bytes.NewReader(src)))
+	b, err := io.ReadAll(base64.NewDecoder(enc, bytes.NewReader(src)))
 	if err != nil {
 		return nil, err
 	}

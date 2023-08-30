@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -132,5 +131,5 @@ func onlyFiles(paths []string) ([]string, error) {
 // (which are the supported encodings of YAML),
 func readAllTranscode(r io.Reader) ([]byte, error) {
 	t := unicode.BOMOverride(runes.ReplaceIllFormed())
-	return ioutil.ReadAll(transform.NewReader(r, t))
+	return io.ReadAll(transform.NewReader(r, t))
 }

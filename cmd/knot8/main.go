@@ -67,7 +67,7 @@ func (s *Setter) UnmarshalText(in []byte) error {
 	s.Field, s.Value = c[0], c[1]
 
 	if strings.HasPrefix(s.Value, "@") {
-		b, err := ioutil.ReadFile(strings.TrimPrefix(s.Value, "@"))
+		b, err := os.ReadFile(strings.TrimPrefix(s.Value, "@"))
 		if err != nil {
 			return err
 		}

@@ -57,6 +57,8 @@ func (Jsonnet) Apply(src []byte, vals []Setter) ([]byte, error) {
 		switch n := n.(type) {
 		case *ast.LiteralString:
 			oldval = []byte(n.Value)
+		case *ast.Import:
+			return nil, fmt.Errorf("cannot directly address an import node. Please use .../~file")
 		default:
 			return nil, fmt.Errorf("unhandled node type %T", n)
 		}
@@ -70,6 +72,13 @@ func (Jsonnet) Apply(src []byte, vals []Setter) ([]byte, error) {
 	}
 	b, _, err := transform.Bytes(splice.T(ops...), src)
 	return b, err
+}
+
+func checkImportFile(path []string) error {
+	if len(path) == 1 && path[0] == "~file" {
+		return nil
+	}
+	return fmt.Errorf("import nodes only support the ~file field, found %q", path)
 }
 
 func findJsonnetNode(root ast.Node, path []string) (ast.Node, error) {
@@ -100,6 +109,21 @@ func findJsonnetNode(root ast.Node, path []string) (ast.Node, error) {
 		return findJsonnetNode(e, path[1:])
 	case *ast.Local:
 		return findJsonnetNode(n.Body, path)
+	case *ast.Import:
+		if err := checkImportFile(path); err != nil {
+			return nil, err
+		}
+		return n.File, nil
+	case *ast.ImportStr:
+		if err := checkImportFile(path); err != nil {
+			return nil, err
+		}
+		return n.File, nil
+	case *ast.ImportBin:
+		if err := checkImportFile(path); err != nil {
+			return nil, err
+		}
+		return n.File, nil
 	default:
 		return nil, fmt.Errorf("unsupported jsonnet node type: %T", n)
 	}

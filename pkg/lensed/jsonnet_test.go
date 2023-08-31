@@ -65,6 +65,27 @@ func TestJsonnet(t *testing.T) {
 			},
 			`local a=1; {foo:{bar:"abc"}}`,
 		},
+		{
+			`{foo:{bar:import "xyz"}}`,
+			[]Mapping{
+				{"~(jsonnet)/foo/bar/~file", "abc"},
+			},
+			`{foo:{bar:import "abc"}}`,
+		},
+		{
+			`{foo:{bar:importstr "xyz"}}`,
+			[]Mapping{
+				{"~(jsonnet)/foo/bar/~file", "abc"},
+			},
+			`{foo:{bar:importstr "abc"}}`,
+		},
+		{
+			`{foo:{bar:importbin "xyz"}}`,
+			[]Mapping{
+				{"~(jsonnet)/foo/bar/~file", "abc"},
+			},
+			`{foo:{bar:importbin "abc"}}`,
+		},
 	}
 
 	for i, tc := range testCases {

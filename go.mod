@@ -11,6 +11,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19
 	github.com/mkmik/multierror v0.3.0
 	github.com/pelletier/go-toml v1.9.5
+	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.13.0

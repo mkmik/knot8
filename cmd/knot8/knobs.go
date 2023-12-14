@@ -4,11 +4,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/lensed"
 )
@@ -53,7 +53,7 @@ func parseFields(manifests []*Manifest) (Fields, error) {
 		}
 	}
 	if errs != nil {
-		return nil, multierror.Join(errs)
+		return nil, errors.Join(errs...)
 	}
 	return res, nil
 }
@@ -99,7 +99,7 @@ func (ks Fields) Rebase(dst Manifests) error {
 		}
 	}
 	if errs != nil {
-		return multierror.Join(errs)
+		return errors.Join(errs...)
 	}
 	return nil
 }
@@ -166,7 +166,7 @@ func (k Field) GetAll() ([]FieldTarget, error) {
 		res = append(res, FieldTarget{ptr: p, value: v})
 	}
 	if errs != nil {
-		return nil, multierror.Join(errs)
+		return nil, errors.Join(errs...)
 	}
 	return res, nil
 }
@@ -203,7 +203,7 @@ func (b EditBatch) Set(n, v string) error {
 		b.edits[file] = append(b.edits[file], lensed.Mapping{p.Abs(), v})
 	}
 	if errs != nil {
-		return multierror.Join(errs)
+		return errors.Join(errs...)
 	}
 
 	return nil
@@ -220,7 +220,7 @@ func (b EditBatch) Commit() error {
 		}
 	}
 	if errs != nil {
-		return multierror.Join(errs)
+		return errors.Join(errs...)
 	}
 	b.committed = true
 	return nil

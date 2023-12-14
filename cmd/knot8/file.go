@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"sort"
 
 	"github.com/mattn/go-isatty"
-	"github.com/mkmik/multierror"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
@@ -103,7 +103,7 @@ func expandPaths(paths []string) ([]string, error) {
 		_ = add(p + "/*.yml")
 	}
 	if errs != nil {
-		return nil, multierror.Join(errs)
+		return nil, errors.Join(errs...)
 	}
 	sort.Strings(res)
 	return res, nil

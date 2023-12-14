@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vmware-labs/go-yaml-edit"
+	yamled "github.com/vmware-labs/go-yaml-edit"
 	"github.com/vmware-labs/go-yaml-edit/splice"
 	yptr "github.com/vmware-labs/yaml-jsonpointer"
 	"golang.org/x/text/transform"

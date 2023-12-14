@@ -6,11 +6,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
 )
 
@@ -112,7 +112,7 @@ func (ms Manifests) Commit() error {
 	}
 
 	if errs != nil {
-		return multierror.Join(errs)
+		return errors.Join(errs...)
 	}
 	return nil
 }

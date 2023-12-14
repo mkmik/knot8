@@ -12,7 +12,6 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/hashicorp/go-getter"
-	"github.com/mkmik/multierror"
 	"gopkg.in/yaml.v3"
 	"knot8.io/pkg/lensed"
 )
@@ -135,7 +134,7 @@ func (s *SetCmd) Run(ctx *Context) error {
 		}
 	}
 	if errs != nil {
-		return multierror.Join(errs)
+		return errors.Join(errs...)
 	}
 	if err := batch.Commit(); err != nil {
 		return err
@@ -167,7 +166,7 @@ func settersFromFiles(paths []string) ([]Setter, error) {
 		}
 	}
 	if errs != nil {
-		return nil, multierror.Join(errs)
+		return nil, errors.Join(errs...)
 	}
 	for k, v := range all {
 		res = append(res, Setter{k, v})
@@ -402,7 +401,7 @@ func checkFields(fields Fields) error {
 		}
 	}
 	if errs != nil {
-		return errNotUniqueValue{multierror.Join(errs)}
+		return errNotUniqueValue{errors.Join(errs...)}
 	}
 	return nil
 }
@@ -462,7 +461,7 @@ func openFields(paths []string, schema string) (*ManifestSet, error) {
 		}
 	}
 	if errs != nil {
-		return nil, multierror.Join(errs)
+		return nil, errors.Join(errs...)
 	}
 
 	fields, err = parseFields(manifests)

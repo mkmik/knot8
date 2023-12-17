@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/alecthomas/kong v0.8.1
-	github.com/go-openapi/jsonpointer v0.20.0
+	github.com/go-openapi/jsonpointer v0.20.1
 	github.com/google/go-jsonnet v0.20.0
 	github.com/hashicorp/go-getter v1.7.3
 	github.com/hashicorp/go-getter/v2 v2.2.1
@@ -25,7 +25,7 @@ require (
 	cloud.google.com/go/storage v1.27.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.122 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/go-openapi/swag v0.22.4 // indirect
+	github.com/go-openapi/swag v0.22.5 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect

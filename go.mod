@@ -7,6 +7,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.1
 	github.com/google/go-jsonnet v0.20.0
 	github.com/hashicorp/go-getter v1.7.3
+	github.com/hashicorp/go-getter/v2 v2.2.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml v1.9.5
 	github.com/vmware-labs/go-yaml-edit v0.3.0

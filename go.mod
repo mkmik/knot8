@@ -7,10 +7,8 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.3
 	github.com/google/go-jsonnet v0.20.0
 	github.com/hashicorp/go-getter v1.7.3
-	github.com/hashicorp/go-getter/v2 v2.2.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml v1.9.5
-	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.14.0
@@ -52,7 +50,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.56.3 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

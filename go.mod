@@ -7,10 +7,8 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.3
 	github.com/google/go-jsonnet v0.20.0
 	github.com/hashicorp/go-getter v1.7.4
-	github.com/hashicorp/go-getter/v2 v2.2.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml v1.9.5
-	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.14.0
@@ -44,9 +42,9 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

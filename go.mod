@@ -1,6 +1,8 @@
 module knot8.io
 
-go 1.21
+go 1.21.0
+
+toolchain go1.24.0
 
 require (
 	github.com/alecthomas/kong v1.7.0
@@ -9,6 +11,7 @@ require (
 	github.com/hashicorp/go-getter v1.7.8
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml v1.9.5
+	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
 	golang.org/x/text v0.21.0

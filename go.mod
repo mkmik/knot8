@@ -1,6 +1,8 @@
 module knot8.io
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
 	github.com/alecthomas/kong v1.7.0
@@ -11,7 +13,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/vmware-labs/go-yaml-edit v0.3.0
 	github.com/vmware-labs/yaml-jsonpointer v0.1.1
-	golang.org/x/text v0.21.0
+	golang.org/x/text v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

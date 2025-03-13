@@ -1,6 +1,6 @@
 module knot8.io
 
-go 1.21
+go 1.24
 
 require (
 	github.com/alecthomas/kong v1.7.0

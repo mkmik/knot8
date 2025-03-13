@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/alecthomas/kong v1.9.0
-	github.com/go-openapi/jsonpointer v0.20.3
+	github.com/go-openapi/jsonpointer v0.21.1
 	github.com/google/go-jsonnet v0.20.0
 	github.com/hashicorp/go-getter v1.7.8
 	github.com/mattn/go-isatty v0.0.20
@@ -23,7 +23,7 @@ require (
 	cloud.google.com/go/storage v1.29.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.122 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/go-openapi/swag v0.22.10 // indirect
+	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/alecthomas/kong v1.9.0
-	github.com/go-openapi/jsonpointer v0.22.0
+	github.com/go-openapi/jsonpointer v0.22.1
 	github.com/google/go-jsonnet v0.21.0
 	github.com/hashicorp/go-getter v1.8.1
 	github.com/mattn/go-isatty v0.0.20
@@ -40,7 +40,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.20 // indirect
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/go-openapi/swag/jsonname v0.24.0 // indirect
+	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
